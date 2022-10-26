@@ -43,7 +43,9 @@
                 j == 0 && i >= 1 ?
                 previousMember = defines[i-1][jCopy][0] :
                 null
-                await new Promise(r => setTimeout(r, rsvpMeasure(member, wpm)))
+                await new Promise(r => setTimeout(r, rsvpMeasure(member, wpm*2)))
+                previousMember = ''
+                await new Promise(r => setTimeout(r, rsvpMeasure(member, wpm*2)))
                 jCopy = j
             }
         }
@@ -202,16 +204,20 @@
             <small>{pos}</small>
             <br/>
             <progress class=this-prog style='position:absolute; top:36px;' value={position} max={synsetsLength} />
-            <h1 style='text-transform:none;text-align:center;color:black;letter-spacing:-.1rem'>
-                {member}
-            </h1>
-            <p style='text-align:right'>
+            <div style='display:flex;flex-direction:column;align-items:center; overflow:hidden'>
+                <h1 style='position:absolute;text-transform:none;color:#cccccc;letter-spacing:-.1rem;text-align: center;'>
+                    {previousMember}
+                </h1>
+                <h1 style='position:absolute;text-transform:none;color:black;letter-spacing:-.1rem;text-align: center;'>
+                    {member}
+                </h1>
+            </div>
+            <p style='text-align:right;margin-top:64px'>
                 <small>{position}</small>
             </p>
             <p>
                 {definition}
             </p>
-
         {/await}
     </main>
 </div>

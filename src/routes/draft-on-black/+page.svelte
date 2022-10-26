@@ -202,9 +202,18 @@
             <small>{pos}</small>
             <br/>
             <progress class=this-prog style='position:absolute; top:36px;' value={position} max={synsetsLength} />
-            <h1 style='text-transform:none;text-align:center;color:black;letter-spacing:-.1rem'>
-                {member}
-            </h1>
+            <div style='height:64px; background-color:black'>
+            <div style='display:flex;flex-direction:column;align-items:center; overflow:hidden'>
+                <!--
+                <h1 style='position:absolute;text-transform:none;color:#555555;letter-spacing:-.1rem;text-align:center'>
+                    {previousMember}
+                </h1>
+                -->
+                <h1 style='text-transform:none;color:white;letter-spacing:-.1rem;text-align:center'>
+                    {member}
+                </h1>
+            </div>
+            </div>
             <p style='text-align:right'>
                 <small>{position}</small>
             </p>
