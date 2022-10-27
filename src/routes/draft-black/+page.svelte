@@ -205,7 +205,7 @@
             <br/>
             <progress class=this-prog style='position:absolute; top:36px;' value={position} max={synsetsLength} />
             <div style='display:flex;flex-direction:column;align-items:center; overflow:hidden'>
-                <h1 style='position:absolute;text-transform:none;color:#cccccc;letter-spacing:-.1rem;text-align: center;'>
+                <h1 style='position:absolute;text-transform:none;color:#bbbbbb;letter-spacing:-.1rem;text-align: center;'>
                     {previousMember}
                 </h1>
                 <h1 style='position:absolute;text-transform:none;color:black;letter-spacing:-.1rem;text-align: center;'>

@@ -5,35 +5,55 @@
 
     console.clear()
 
-    //missing attrbibuteNamePrefix: "@_"
+    // missing attrbibuteNamePrefix: "@_"
     const options = {
         ignoreAttributes: false,
         ignorePiTags: true
     }
     const parser = new fxp.XMLParser(options)
 
-    function rsvpMeasure(word, wpm, avgLength = avgMemberLength) {
+    
+    function rsvpMeasure(word, targetWPM, avgLength = avgMemberLength) {
         const millisecond = 1000
         const avgEngWordLength = 5.2
         const avgWordLength = avgLength
         const chunkLength = word.length
-        const reserveTime = (1/((wpm*avgWordLength)/60))*chunkLength
+        const reserveTime = (1/((targetWPM*avgLength)/60))*chunkLength
         return reserveTime*millisecond
     }
-
+    
+    // synset handling
     let synsetDefines
     let synsetsLength = 0
     let sumMembersLengths = 0
-    let avgMemberLength = 0
+    let avgMemberLength = 10
     let position = 0
     let member = ''
     let previousMember = ''
     let pos = ''
     let definition = ''
 
-    async function displayDefines(defines, wpm = 500) {
-        let ii = 1
+    // inputs
+    let desiredWPM = 60
+    let desiredPosition = 0
+    let positionTransfer = 0
+    let activateReverse = false
+    let previousWPM = 0
+    let previousPosition = 0
+    let previousReverse = false
+    
+    // other
+    let delay
+
+    // serves the data
+    /* BUGS
+    async function displayAllDefines(definesProc, wpmReq, positionReq, reverseReq) {
+        let ii = 1 + positionReq
         let jCopy = 0
+        let defines
+        reverseReq != true ?
+        defines = definesProc.slice(ii - 1) :
+        defines = definesProc.slice(ii).reverse()
         for (const [i, x] of defines.entries()) {    
             for (const [j, y] of x.entries()) {
                 ii++
@@ -43,12 +63,58 @@
                 j == 0 && i >= 1 ?
                 previousMember = defines[i-1][jCopy][0] :
                 null
-                await new Promise(r => setTimeout(r, rsvpMeasure(member, wpm)))
+                await new Promise(r => setTimeout(r, rsvpMeasure(member, wpmReq)))
                 jCopy = j
             }
         }
     }
+    */
 
+    function displayDefine(define, positionReq) {
+        let x = define[positionReq];
+        [position, member, pos, definition] = [positionReq, x[0], x[1], x[2]]
+    }
+   
+    // delay handling in async
+    function createDelay() {
+        delay =  new Promise(r => setTimeout(r, rsvpMeasure(member, desiredWPM)))
+        
+    }
+    function cancelDelay() {
+        clearTimeout(delay)
+    }
+
+    // calling the input
+    async function gatherUserInput(positionIn, definesIn) {
+        //if (previousWPM != wpmIn || previousPosition != 0 || reverseIn != true ) {
+        cancelDelay()
+        displayDefine(definesIn, positionIn)
+        createDelay()
+        await delay
+        if (positionTransfer != desiredPosition) {
+            position = desiredPosition
+            positionTransfer = desiredPosition
+        }
+        else if (position == synsetsLength - 1) {
+            position = 0
+        }
+        else
+        { 
+            activateReverse == false ?
+            position++ :
+            position--
+        }
+        //}
+        //else {
+        //await displayDefine(definesIn[previousPosition], previousReverse)
+        //
+        //}
+        //previousWPM = wpmIn
+        //previousPosition = positionIn
+        //previousReverse = reverseIn
+    }
+
+    // gets the data
     onMount(async () => {
         
         // fetching xml and converting > text > JSobj
@@ -58,10 +124,11 @@
         const lexicals = wordnet.LexicalResource.Lexicon.LexicalEntry
         const synsets = wordnet.LexicalResource.Lexicon.Synset
         const syntax = wordnet.LexicalResource.Lexicon.SyntacticBehaviour
-
+        let synsetsPerEntry
         /*
         legend:
             aao: array of objects
+            aoaoa: array (of arrays) ** 2
             off: offset
             i: index
             gate: return value
@@ -146,23 +213,23 @@
                     })
             }
             
+            // this effectively pulls whatever you need per array within the flat parent
+            // so, searching?
             if (gate != 'define') {
                 toReturn = giveReturn
             }
             else {
+                //console.log(giveReturn)
                 const membersSplit = giveReturn[1][1].
                 replaceAll('-a-',"'").
                 split(" ").
                 map(x => x.slice(5, x.length - 2).replaceAll('_',' '))
                 membersSplit.forEach(x => {
-                    synsetsLength+=1
-                    sumMembersLengths += x.length
                     toReturn.push([x,
                     giveReturn[2][1],
                     giveReturn[0][1]
                     ])}
                 )
-                avgMemberLength = sumMembersLengths/synsetsLength
             }
             return toReturn
         }
@@ -173,45 +240,79 @@
             return range.map(x => x + off).map(y => func(aao, y, gate))
         }
 
-        // see range of Sysnets
+        // see all of Sysnets
         function getAllFunc(aao = synsets, func = flatSynset, gate = 'entries') {
             const range = aao.map((x, i) => i)
             return range.map(y => func(aao, y, gate))
         }
-
-
+        
+        // for an array of arrays ** 2 return a one level
+        function flattenInterior(aoaoa) {
+            let aoFlatA = []
+            for (const x of aoaoa) {
+                for (const y of x) {
+                    aoFlatA.push(y)
+                }
+            }
+            return aoFlatA
+        }
+        
         // function calls
         //console.log(getAllFunc(synsets, getSynsetEntries, 'keys'))
-        synsetDefines = getAllFunc(synsets, getSynsetEntries, 'define')
+        synsetsPerEntry = getAllFunc(synsets, getSynsetEntries, 'define')
+        synsetDefines = flattenInterior(synsetsPerEntry)
+        synsetDefines.forEach(x => sumMembersLengths += x[0].length)
+        avgMemberLength = sumMembersLengths/synsetDefines.length
+        synsetsLength = synsetDefines.length
         //console.log(wordnetArray = flatSynset(synsets,0))
-        
-        
+                
     })
-    
+    /*
+        the progress bar needs to take another value when reversed or there's something wrong with position
+        the array may need to be flattened for easier traversal
+        end state required
+        gathering user input
+    */ 
 </script>
 
 <div style='display:flex; justify-content:center'>
-    <main style='width:600px; height:300px; border:18px solid black; padding:18px; overflow:hidden'>
+    <main style='width:600px; height:auto; border:18px solid black; padding:18px; overflow:hidden'>
         <noscript>This page requires JavaScript.</noscript>
         {#if synsetDefines == undefined}    
             <p style='text-align:center'>
                 Loading Synsets
             </p>
         {/if}
-        {#await displayDefines(synsetDefines,600)}
+        {#await gatherUserInput(position, synsetDefines)}
             <small>{pos}</small>
             <br/>
-            <progress class=this-prog style='position:absolute; top:36px;' value={position} max={synsetsLength} />
-            <h1 style='text-transform:none;text-align:center;color:black;letter-spacing:-.1rem'>
-                {member}
-            </h1>
+            <progress class='this-prog' style='position:absolute; top:36px;' value={position} max={synsetsLength} />
+            <div style='height:64px'>
+                <h1 style='text-transform:none;text-align:center;color:black;letter-spacing:-.05rem'>
+                    {member}
+                </h1>
+            </div>
             <p style='text-align:right'>
                 <small>{position}</small>
             </p>
-            <p>
-                {definition}
-            </p>
-
+            <div style='height:180px'>
+                <p>
+                    {definition}
+                </p>
+            </div>
+            <p/>
+            <div style='display:flex;'>
+                <input class='bar-input' name='WPM' type='number' bind:value={desiredWPM}>
+                <label for='WPM'>WPM</label>
+            </div>
+            <div style='display:flex;'>
+                <input class='bar-input' name='INDEX' type='number' bind:value={desiredPosition}>
+                <label for='INDEX'>INDEX</label>
+            </div>           
+             <div style='display:flex;'>
+                <input name='REVERSE' type='checkbox' on:click={(()=>(activateReverse = !activateReverse))}>
+                <label for='REVERSE'>REVERSE</label>
+            </div>
         {/await}
     </main>
 </div>
@@ -249,6 +350,12 @@
         background-color: #80d000
     }
 
+    .bar-input {
+        width: 68px;
+
+    }
+
+
     h1 {
         color: #808080;
         font-family: 'Arial';
@@ -275,7 +382,7 @@
         line-height: 1.5em;
         font-weight: normal;
     }
-    small {
+    small, label {
         color: #bbbbbb;
         font-family: 'Arial';
         font-size: 10px;
