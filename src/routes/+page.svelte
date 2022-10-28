@@ -22,11 +22,13 @@
         return reserveTime*millisecond
     }
     
-    // synset handling
+    // synset handling      
+    let lexicalSearchTerms
     let synsetDefines
     let synsetsLength = 0
     let sumMembersLengths = 0
     let avgMemberLength = 10
+    let wordnet
     let position = 0
     let member = ''
     let previousMember = ''
@@ -36,9 +38,12 @@
     // inputs
     let validateWPM = 60
     let desiredWPM = 60
+    let wpmTransfer = 60
     let validatePosition = 0
     let desiredPosition = 0
     let positionTransfer = 0
+    let stepPositionUp = false
+    let stepPositionDown = false 
     let activateReverse = false
     let activateStop = false
     let previousWPM = 0
@@ -77,8 +82,8 @@
     */
 
     function displayDefine(define, positionReq) {
-        let x = define[positionReq];
-        [position, member, pos, definition] = [positionReq, x[0], x[1], x[2]]
+        const x = define[positionReq];
+        [member, pos, definition] = [x[0], x[1], x[2]]
     }
    
     // delay handling in async
@@ -90,18 +95,35 @@
         clearTimeout(delay)
     }
 
+    /*
+    function stepPosition(gate) {
+        switch (gate) {
+            case 'up':
+                cancelDelay()
+                displayDefine(synsetDefines, position + 1)
+                position ++
+                break
+            case 'down':
+                cancelDelay()
+                displayDefine(synsetDefines, position - 1)
+                position --
+                break
+        }
+    }
+    */
+
     // calling the input
-    async function gatherUserInput(positionIn, definesIn) {
-        
+    async function gatherUserInput(positionIn, definesIn) {    
         cancelDelay()
-        displayDefine(definesIn, positionIn)
+        displayDefine(definesIn, positionIn) 
         createDelay()
         await delay
-        // user input index handling
+
         if (activateStop == false) {
+            // user input index handling
             if (positionTransfer != desiredPosition ) {
-                    position = desiredPosition
-                    positionTransfer = desiredPosition
+                position = desiredPosition
+                positionTransfer = desiredPosition
             }
             // looping the display 
             else if (position == synsetsLength - 1) {
@@ -119,12 +141,34 @@
                 position = synsetsLength - 1
             }
         }
+        // pause
         else {
             position++
             position--
         }
+    
     }
 
+    // search members
+    async function searchTermReturn(term, aoaoa, synsetsArray){
+        function testSearch(lexicalTerm) {
+           return term == lexicalTerm[0]
+        }
+        const searchReturn = aoaoa.filter(testSearch)
+        let realIDs = []
+        searchReturn.forEach(y => {
+            let tempIn = []
+            y[2].forEach(z => {
+                function getIndex(synsetTest) {
+                    return z == synsetTest[3] 
+                }
+                tempIn.push(synsetsArray.find(getIndex)[4])
+            })
+            realIDs.push(tempIn)
+        })
+        return searchReturn.map((x, i) => x.concat(realIDs[i].sort())) 
+    }
+    
     // gets the data
     onMount(async () => {
         
@@ -136,20 +180,19 @@
         const synsets = wordnet.LexicalResource.Lexicon.Synset
         const syntax = wordnet.LexicalResource.Lexicon.SyntacticBehaviour
         let synsetsPerEntry
+        
+        
         /*
         legend:
-            aao: array of objects
+            aoo: array of objects
             aoaoa: array (of arrays) ** 2
             off: offset
             i: index
             gate: return value
             wpm: words per minute (target)
             avgLegnth: against what the word (param) was sourced from
-        
-        note: 
-            * I don't have to say this to myself, but some of thease are to learn
-            the LMF format.
         */
+
 
         // validate
 
@@ -162,8 +205,37 @@
             }).flat(2))
         }
         
-        // extract nested keys
-        // gate params: see switch/case
+        // extract nested
+        function getLexicals (aoo){
+            return lexicals.map(x => {
+                const lemma = x['Lemma']['@_writtenForm']
+                const lexPOS = x['Lemma']['@_partOfSpeech']
+                let synsetIDs = []
+                if (x['Sense'] instanceof Array) {
+                    x['Sense'].forEach(y => synsetIDs.push(y['@_synset']))
+                }
+                else {
+                    synsetIDs.push(x['Sense']['@_synset'])
+                }
+                return [lemma, lexPOS, synsetIDs]
+            })
+        }
+               
+        function getSynsets(aoo) {
+            let giveReturn = []
+            let countSyn = 1
+            aoo.forEach(x => {
+                const memberArray = x['@_members'].replaceAll('-a-',"'").split(" ")
+                const memberArrayTrim = memberArray.map(y => y.slice(5, y.length -2).replaceAll('_', ' '))
+                for (const z of memberArrayTrim) {
+                    giveReturn.push([z, x['@_lexfile'], x['Definition'], x['@_id'], countSyn])
+                    countSyn++
+                }
+            })
+            return giveReturn
+        }
+
+        // words per entry with getAllFunc gate params: see switch/case
         function getSynsetEntries(aoo, i, gate) {
             const synsetArray = flatSynset(aoo, i)
             let giveReturn = []
@@ -245,16 +317,16 @@
             return toReturn
         }
         
-        // see range of Sysnets
-        function getDecaFunc(off = 0, aao = synsets, func = flatSynset, gate = 'entries') {
+        // see range of synsets
+        function getDecaFunc(off = 0, aoo = synsets, func = flatSynset, gate = 'entries') {
             const range = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-            return range.map(x => x + off).map(y => func(aao, y, gate))
+            return range.map(x => x + off).map(y => func(aoo, y, gate))
         }
 
-        // see all of Sysnets
-        function getAllFunc(aao = synsets, func = flatSynset, gate = 'entries') {
-            const range = aao.map((x, i) => i)
-            return range.map(y => func(aao, y, gate))
+        // see all of synsets
+        function getAllFunc(aoo = synsets, func = flatSynset, gate = 'entries') {
+            const range = aoo.map((x, i) => i)
+            return range.map(y => func(aoo, y, gate))
         }
         
         // for an array of arrays ** 2 return a one level
@@ -270,12 +342,15 @@
         
         // function calls
         //console.log(getAllFunc(synsets, getSynsetEntries, 'keys'))
-        synsetsPerEntry = getAllFunc(synsets, getSynsetEntries, 'define')
-        synsetDefines = flattenInterior(synsetsPerEntry)
+        //synsetsPerEntry = getAllFunc(synsets, getSynsetEntries, 'define')
+        synsetDefines = getSynsets(synsets)
+        //synsetDefines = flattenInterior(synsetsPerEntry)
         synsetDefines.forEach(x => sumMembersLengths += x[0].length)
         avgMemberLength = sumMembersLengths/synsetDefines.length
         synsetDefines.unshift(['a word', 'intro.this', 'a feature of language with often comparable meaning(s) to others like it'])
         synsetsLength = synsetDefines.length
+        lexicalSearchTerms = getLexicals(lexicals)
+        //console.log(lexicalSearchTerms)
         //console.log(wordnetArray = flatSynset(synsets,0))
                 
     })
@@ -314,12 +389,16 @@
             </div>
             <p/>
             <div style='display:flex;'>
-                <input class='bar-input' name='WPM' type='number' min='1' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 1 ? validateWPM = 1 : validateWPM == null ? validateWPM = 1 : null}} bind:value={validateWPM}>
+                <input class='bar-input' type='number' name='WPM' min='1' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 1 ? validateWPM = 1 : validateWPM == null ? validateWPM = 1 : null}} bind:value={validateWPM}>
                 <input type='button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
             </div>
             <div style='display:flex;'>
-                <input class='bar-input' name='INDEX' type='number' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
+                <input class='bar-input' type='number' name='INDEX' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
                 <input type='button' on:click={()=> desiredPosition != validatePosition ? desiredPosition = validatePosition : positionTransfer++ } value='INDEX'>
+            </div>
+            <div style='display:flex; flex-direction:row;'>
+                <input type='button' name='STEPDOWN' on:click={()=> stepPositionUp = true} value='STEP -1'>
+                <input type='button' name='STEPUP' on:click={()=> stepPositionDown = true} value='STEP +1'>
             </div>           
              <div style='display:flex;'>
                 <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
@@ -331,8 +410,19 @@
             </div>
             <hr />
             <div style='display=flex;'>
-                <input type='search' placeholder='>>' on:input={(value) => searchTerm = value.toString()} name='SEARCH'>
+                <input type='search' placeholder='>>' bind:value={searchTerm} name='SEARCH'>
                 <label for='SEARCH'>::SEARCH</label>
+            </div>            
+
+        {/await}
+        {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
+            <div>
+                {#each result as searchDisp}
+                <p>
+                    <small>Part of speech:</small> {searchDisp[1]} 
+                    <small>Index:</small> {searchDisp[3]} 
+                </p>
+                {/each}
             </div>
         {/await}
     </main>
