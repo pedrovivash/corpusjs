@@ -34,14 +34,20 @@
     let definition = ''
 
     // inputs
+    let validateWPM = 60
     let desiredWPM = 60
+    let validatePosition = 0
     let desiredPosition = 0
     let positionTransfer = 0
     let activateReverse = false
+    let activateStop = false
     let previousWPM = 0
     let previousPosition = 0
     let previousReverse = false
-    
+
+    // search handling
+    let searchTerm = ''
+
     // other
     let delay
 
@@ -86,32 +92,37 @@
 
     // calling the input
     async function gatherUserInput(positionIn, definesIn) {
-        //if (previousWPM != wpmIn || previousPosition != 0 || reverseIn != true ) {
+        
         cancelDelay()
         displayDefine(definesIn, positionIn)
         createDelay()
         await delay
-        if (positionTransfer != desiredPosition) {
-            position = desiredPosition
-            positionTransfer = desiredPosition
+        // user input index handling
+        if (activateStop == false) {
+            if (positionTransfer != desiredPosition ) {
+                    position = desiredPosition
+                    positionTransfer = desiredPosition
+            }
+            // looping the display 
+            else if (position == synsetsLength - 1) {
+                activateReverse == false ?
+                position = 0 :
+                position = synsetsLength - 2
+            }
+            // forward and reverse
+            else
+            { 
+                activateReverse == false ?
+                position++ :
+                position != 0 ?
+                position-- :
+                position = synsetsLength - 1
+            }
         }
-        else if (position == synsetsLength - 1) {
-            position = 0
-        }
-        else
-        { 
-            activateReverse == false ?
-            position++ :
+        else {
+            position++
             position--
         }
-        //}
-        //else {
-        //await displayDefine(definesIn[previousPosition], previousReverse)
-        //
-        //}
-        //previousWPM = wpmIn
-        //previousPosition = positionIn
-        //previousReverse = reverseIn
     }
 
     // gets the data
@@ -263,6 +274,7 @@
         synsetDefines = flattenInterior(synsetsPerEntry)
         synsetDefines.forEach(x => sumMembersLengths += x[0].length)
         avgMemberLength = sumMembersLengths/synsetDefines.length
+        synsetDefines.unshift(['a word', 'intro.this', 'a feature of language with often comparable meaning(s) to others like it'])
         synsetsLength = synsetDefines.length
         //console.log(wordnetArray = flatSynset(synsets,0))
                 
@@ -286,7 +298,7 @@
         {#await gatherUserInput(position, synsetDefines)}
             <small>{pos}</small>
             <br/>
-            <progress class='this-prog' style='position:absolute; top:36px;' value={position} max={synsetsLength} />
+            <progress class='this-prog' style='position:absolute; top:36px;' value={position + 1} max={synsetsLength} />
             <div style='height:64px'>
                 <h1 style='text-transform:none;text-align:center;color:black;letter-spacing:-.05rem'>
                     {member}
@@ -302,16 +314,25 @@
             </div>
             <p/>
             <div style='display:flex;'>
-                <input class='bar-input' name='WPM' type='number' bind:value={desiredWPM}>
-                <label for='WPM'>WPM</label>
+                <input class='bar-input' name='WPM' type='number' min='1' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 1 ? validateWPM = 1 : validateWPM == null ? validateWPM = 1 : null}} bind:value={validateWPM}>
+                <input type='button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
             </div>
             <div style='display:flex;'>
-                <input class='bar-input' name='INDEX' type='number' bind:value={desiredPosition}>
-                <label for='INDEX'>INDEX</label>
+                <input class='bar-input' name='INDEX' type='number' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
+                <input type='button' on:click={()=> desiredPosition != validatePosition ? desiredPosition = validatePosition : positionTransfer++ } value='INDEX'>
             </div>           
              <div style='display:flex;'>
-                <input name='REVERSE' type='checkbox' on:click={(()=>(activateReverse = !activateReverse))}>
-                <label for='REVERSE'>REVERSE</label>
+                <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
+                <label for='REVERSE'>::REVERSE</label>
+            </div>            
+            <div style='display:flex;'>
+                <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))}>
+                <label for='STOP'>::STOP</label>
+            </div>
+            <hr />
+            <div style='display=flex;'>
+                <input type='search' placeholder='>>' on:input={(value) => searchTerm = value.toString()} name='SEARCH'>
+                <label for='SEARCH'>::SEARCH</label>
             </div>
         {/await}
     </main>
