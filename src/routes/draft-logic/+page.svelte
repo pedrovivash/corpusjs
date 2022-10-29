@@ -1,7 +1,6 @@
 <script>
     import fxp from "fast-xml-parser"
     import { onMount } from 'svelte';
-    import '../styles/global.css'
 
 
     console.clear()
@@ -482,6 +481,14 @@
 </div>
 
 <style>
+    :global(*) {
+        -ms-overflow-style: none; /* for Internet Explorer, Edge */
+        scrollbar-width: none; /* for Firefox */
+    }
+
+    :global(*::-webkit-scrollbar) {
+        display: none; /* for Chrome, Safari, and Opera */
+    }
 
     progress {
         /* Reset the default appearance */
@@ -511,4 +518,63 @@
 
     }
 
+
+    h1 {
+        color: #808080;
+        font-family: 'Arial';
+        font-size: 32px;
+        letter-spacing: .05em;
+        line-height: 1.5rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    h2 {
+        color: #808080;
+        font-family: 'Arial';
+        font-size: 20px;
+        letter-spacing: .05em;
+        line-height: 1.5em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    p {
+        color: #808080;
+        font-family: 'Arial';
+        font-size: 18px;
+        letter-spacing: .11em;
+        line-height: 1.5em;
+        font-weight: normal;
+    }
+    small, label {
+        color: #bbbbbb;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        line-height: 1.25em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    br {
+        line-height: 24px;
+    }
+    hr {
+        border: 9px solid black;
+    }
+    a {
+        text-decoration: none;
+    }
+    a:link {
+        color: #80d000
+    }
+    a:hover {
+        background-color: black;
+        color: white !important;
+    }
+    a:visited {
+        color: black
+        
+    }
+    a:active {
+        color: #c5f17e !important;
+    }
 </style>
