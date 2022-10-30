@@ -1,8 +1,8 @@
 <script>
     import fxp from "fast-xml-parser"
-    import { onMount } from 'svelte';
+    import { onMount } from 'svelte'
     import '../styles/global.css'
-
+    import {MagnifyingGlass} from 'radix-icons-svelte'
 
     console.clear()
 
@@ -23,7 +23,54 @@
         return reserveTime*millisecond
     }
     
-    // synset handling      
+    // synset handling
+    const lexPartList = [
+        'adj.all',
+        'adj.pert',
+        'adj.ppl',
+        'adv.all',
+        'noun.act',
+        'noun.animal',
+        'noun.artifact',
+        'noun.attribute',
+        'noun.body',
+        'noun.cognition',
+        'noun.communication',
+        'noun.event',
+        'noun.feeling',
+        'noun.food',
+        'noun.group',
+        'noun.location',
+        'noun.motive',
+        'noun.object',
+        'noun.person',
+        'noun.phenomenon',
+        'noun.plant',
+        'noun.possession',
+        'noun.process',
+        'noun.quantity',
+        'noun.relation',
+        'noun.shape',
+        'noun.state',
+        'noun.substance',
+        'noun.time',
+        'noun.Tops',
+        'verb.body',
+        'verb.change',
+        'verb.cognition',
+        'verb.communication',
+        'verb.competition',
+        'verb.consumption',
+        'verb.contact',
+        'verb.creation',
+        'verb.emotion',
+        'verb.motion',
+        'verb.perception',
+        'verb.possession',
+        'verb.social',
+        'verb.stative',
+        'verb.weather']
+    let lexPartArray = []    
     let lexicalSearchTerms
     let synsetDefines
     let synsetsLength = 0
@@ -53,6 +100,7 @@
 
     // search handling
     let searchTerm = ''
+    let displaySearch = 'none'
 
     // other
     let delay
@@ -84,6 +132,13 @@
     }
     */
 
+    function chaptersDisplay(){
+        displaySearch != 'none' ?
+        displaySearch = 'none' :
+        displaySearch = 'flex'
+    }
+
+
     function displayDefine(define, positionReq) {
         const x = define[positionReq];
         [member, pos, definition] = [x[0], x[1], x[2]]
@@ -106,22 +161,43 @@
             case 'up':
                 activateStop = true
                 stopCheck.checked = true
-                wpmTransfer = desiredWPM
-                desiredWPM = 0
-                stepPositionUp = true
-                
+                stepPositionUp = true 
                 break
             case 'down':
                 activateStop = true
                 stopCheck.checked = true
-                wpmTransfer = desiredWPM
-                desiredWPM = 0
                 stepPositionDown = true
                 break
         }
     }
       
-    
+    function chapterSwitch(chapterIndex) {
+        if (activateStop != false) {
+            activateStop = false
+            stopCheck.checked = false
+            desiredPosition = chapterIndex
+            displaySearch = 'none'
+        }
+        else {
+            desiredPosition = chapterIndex
+            displaySearch = 'none'
+        }
+    }
+
+    function fillDesiredPosition(aPosition) {
+        if (activateStop != false) {
+            activateStop = false
+            stopCheck.checked = false
+            desiredPosition != aPosition ? 
+            desiredPosition = aPosition : 
+            positionTransfer++
+        }
+        else {
+            desiredPosition != aPosition ? 
+            desiredPosition = aPosition : 
+            positionTransfer++
+        }
+    }
 
     // calling the input
     async function gatherUserInput(positionIn, definesIn) {    
@@ -277,7 +353,7 @@
             let giveReturn = []
             let countSyn = 1
             aoo.forEach(x => {
-                const memberArray = x['@_members'].replaceAll('-a-',"'").split(" ")
+                const memberArray = x['@_members'].replaceAll('-ap-',"'").split(" ")
                 const memberArrayTrim = memberArray.map(y => y.slice(5, y.length -2).replaceAll('_', ' '))
                 for (const z of memberArrayTrim) {
                     giveReturn.push([z, x['@_lexfile'], x['Definition'], x['@_id'], countSyn])
@@ -356,7 +432,7 @@
             else {
                 //console.log(giveReturn)
                 const membersSplit = giveReturn[1][1].
-                replaceAll('-a-',"'").
+                replaceAll('-ap-',"'").
                 split(" ").
                 map(x => x.slice(5, x.length - 2).replaceAll('_',' '))
                 membersSplit.forEach(x => {
@@ -401,6 +477,13 @@
         avgMemberLength = sumMembersLengths/synsetDefines.length
         synsetDefines.unshift(['a word', 'intro.this', 'a feature of language with often comparable meaning(s) to others like it'])
         synsetsLength = synsetDefines.length
+        lexPartArray = lexPartList.map(lexGroup=> {
+            function testLexPart(synsetArray) {
+                return synsetArray[1] == lexGroup
+            }
+            return [synsetDefines.find(testLexPart)[4], lexGroup]
+        })
+        
         lexicalSearchTerms = getLexicals(lexicals)
         //console.log(lexicalSearchTerms)
         //console.log(wordnetArray = flatSynset(synsets,0))
@@ -423,48 +506,54 @@
             </p>
         {/if}
         {#await gatherUserInput(position, synsetDefines)}
-            <small>{pos}</small>
-            <br/>
-            <progress class='this-prog' style='position:absolute; top:36px;' value={position + 1} max={synsetsLength} />
-            <div style='height:64px'>
-                <h1 style='text-transform:none;text-align:center;color:black;letter-spacing:-.05rem'>
+            <div class='controls'>
+                <div style='display:flex;'>
+                    <input type='number' name='WPM' min='60' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 60 ? validateWPM = 60 : validateWPM == null ? validateWPM = 60 : null}} bind:value={validateWPM}>
+                    <input type='button' class='desired-button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
+                </div>
+                <div style='display:flex;'>
+                    <input type='number' name='INDEX' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
+                    <input type='button' class='desired-button' on:click={()=> fillDesiredPosition(validatePosition) } value='INDEX'>
+                </div>            
+                <div style='display:flex; flex-direction:row;'>
+                    <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
+                    <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
+                </div>    
+                <button class='dropbtn' on:click={()=> chaptersDisplay()} name='partofSpeech'>CHAPTERS<div class='arrow' /></button>
+                <div class='dropdown-container' style='display:{displaySearch}'>
+                    {#each lexPartArray as lexPart}
+                        <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
+                    {/each}
+                </div>
+                <div style='display:flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
+                    <label for='REVERSE'>REVERSE:</label> 
+                    <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
+                    <label for='STOP'>STOP:</label> 
+                    <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))} bind:this={stopCheck}>
+                </div>
+                <div style='display=flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
+                    <MagnifyingGlass style='top:3px; position:relative' />
+                    <input type='search' class='search-input' placeholder='>>' bind:value={searchTerm} name='SEARCH'>
+                </div>
+            </div> 
+            <progress class='this-prog' style='' value={position + 1} max={synsetsLength} />
+            <p>
+                <small>{pos}</small>
+            </p>
+            <div style='height:76px;background-color:black;text-align:center;padding:10px 0px 0px 0px;'>
+                <h1 style='text-transform:none;color:white;line-height:1rem;letter-spacing:-.05rem;font-size:20px'>
                     {member}
                 </h1>
             </div>
-            <p style='text-align:right'>
-                <small>{position}</small>
-            </p>
-            <div style='height:180px'>
+                <p style='text-align:right'>
+                    <small>{position}</small>
+                </p>
+            <div style='min-height:236px'>
                 <p>
                     {definition}
                 </p>
             </div>
-            <p/>
-            <div style='display:flex;'>
-                <input class='bar-input' type='number' name='WPM' min='60' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 60 ? validateWPM = 60 : validateWPM == null ? validateWPM = 60 : null}} bind:value={validateWPM}>
-                <input type='button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
-            </div>
-            <div style='display:flex;'>
-                <input class='bar-input' type='number' name='INDEX' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
-                <input type='button' on:click={()=> desiredPosition != validatePosition ? desiredPosition = validatePosition : positionTransfer++ } value='INDEX'>
-            </div>
-            <div style='display:flex; flex-direction:row;'>
-                <input type='button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
-                <input type='button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
-            </div>           
-             <div style='display:flex;'>
-                <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
-                <label for='REVERSE'>::REVERSE</label>
-            </div>            
-            <div style='display:flex;'>
-                <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))} bind:this={stopCheck}>
-                <label for='STOP'>::STOP</label>
-            </div>
-            <hr />
-            <div style='display=flex;'>
-                <input type='search' placeholder='>>' bind:value={searchTerm} name='SEARCH'>
-                <label for='SEARCH'>::SEARCH</label>
-            </div>            
+           
 
         {/await}
         {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
@@ -483,6 +572,7 @@
 
 <style>
 
+    
     progress {
         /* Reset the default appearance */
         -webkit-appearance: none;
@@ -492,8 +582,7 @@
     .this-prog {
         background-color:#dddddd;
         border: none;
-        min-width: 1rem;
-        max-width: 10%;
+        width: 148px;
         height: 9px;
     }
     .this-prog::-webkit-progress-bar {
@@ -506,9 +595,185 @@
         background-color: #80d000
     }
 
-    .bar-input {
-        width: 68px;
+    .search-input {
+        height: 16px;
+        width: 129px;
+        color: #80d000;
+        margin: 0px 0px 0px 0px;
+        box-sizing: border-box;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        line-height: 1.25em;
+        font-weight: bold;
+        text-transform: none;        
+        background-color: white;
+        border-radius: none;
+        outline: #80d000 solid 1px;
+        outline-offset: none;
+        border-style: none;
 
+    }
+
+    ::placeholder {
+        opacity: 1.0;
+        color: #80d000
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    input[type=number] {
+        -moz-appearance:textfield;
+    }  
+    input[type=number] { 
+        height: 16px;
+        max-width:72px;
+        min-width:72px;
+        margin: 0px 4px 4px 0px;
+        box-sizing: border-box;
+        color: #80d000;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        line-height: 1.25em;
+        font-weight: bold;
+        text-transform: uppercase;        
+        background-color: white;
+        border-radius: none;
+        outline: #80d000 solid 1px;
+        outline-offset: none;
+        border-style: none;
+    }
+    .desired-button {
+        height: 16px;
+        min-width:72px;
+        margin: 0px 4px 4px 0px;
+        box-sizing: border-box;
+        color: #80d000;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        line-height: 1.25em;
+        font-weight: bold;
+        text-transform: uppercase;
+        background-color: white;
+        border-radius: none;
+        outline: #80d000 solid 1px;
+        outline-offset: none;
+        border-style: none;
+        cursor: pointer;
+    }
+    .step-button {
+        height: 16px;
+        min-width:72px;
+        margin: 0px 4px 5px 0px;
+        box-sizing: border-box;
+        color: #80d000;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        line-height: 1.25em;
+        font-weight: bold;
+        text-transform: uppercase;        
+        background-color: white;
+        border-radius: none;
+        outline: #80d000 solid 1px;
+        outline-offset: none;
+        border-style: none;
+        cursor: pointer;
+    }
+    .dropbtn {
+        display:flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        height: 16px;
+        width: 148px;
+        margin: 0px 4px 4px 0px;
+        padding: 0px 16px 0px 15px;
+        box-sizing: border-box;
+        color: #80d000;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        line-height: 1.25em;
+        font-weight: bold;
+        text-transform: uppercase;        
+        background-color: white;
+        border-radius: none;
+        outline: #80d000 solid 1px;
+        outline-offset: none;
+        border-style: none;
+        cursor: pointer;
+    }
+    .dropdown-container {
+        flex-direction: column;
+        outline: #eeeeee solid 1px;
+        width: 148px;
+        height: 135px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, .2);
+        position:absolute;
+        overflow-y: scroll;
+        z-index: 1;
+    }
+   
+    .dropdown-content {
+        text-align: left;
+        padding: 0px 2px;
+        box-sizing: border-box;
+        color: #80d000;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        font-weight: bold;
+        text-transform: uppercase;        
+        background-color: white;
+        border-radius: none;
+        outline-offset: none;
+        border-style: none;
+        cursor: pointer;
+    }
+    .dropdown-content:hover {
+        color:white;
+        background-color: black;
+    }
+    .arrow {
+        content: "";
+        width: 0.8em;
+        height: 0.5em;
+        background-color: #80d000;
+        clip-path: polygon(100% 0%, 0 0%, 50% 100%);
+
+        
+    }
+    input[type="checkbox"] {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        -ms-appearance: none !important;
+        -o-appearance: none !important;
+        appearance: none !important;
+        background-color: white;
+        border: 1px solid #80d000;
+        padding: 6px;
+        border-radius: none;
+        align-items: center;
+
+    }
+
+    input[type='checkbox']:checked {
+        display:grid;
+        grid-template-areas: "select";
+        padding: 4px;
+    }
+    input[type='checkbox']::after {
+        content:"";
+        width: 4px;
+        height: 4px;
+        clip-path: polygon(20% 0%, 0% 20%, 30% 50%, 0% 80%, 20% 100%, 50% 70%, 80% 100%, 100% 80%, 70% 50%, 100% 20%, 80% 0%, 50% 30%);
+        background-color:#80d000;
+        grid-area: select
     }
 
 </style>
