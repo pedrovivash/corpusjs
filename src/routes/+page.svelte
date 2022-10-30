@@ -2,7 +2,7 @@
     import fxp from "fast-xml-parser"
     import { onMount } from 'svelte'
     import '../styles/global.css'
-    import {MagnifyingGlass} from 'radix-icons-svelte'
+    import {MagnifyingGlass, Gear} from 'radix-icons-svelte'
 
     console.clear()
 
@@ -100,7 +100,11 @@
 
     // search handling
     let searchTerm = ''
+    let displayChapter = 'none'
+    let displayControls = 'none'
+    let displaySettings = 'none'
     let displaySearch = 'none'
+    let isResults = false
 
     // other
     let delay
@@ -131,13 +135,26 @@
         }
     }
     */
-
-    function chaptersDisplay(){
-        displaySearch != 'none' ?
-        displaySearch = 'none' :
-        displaySearch = 'flex'
+    function settingsDisplay() {
+        displaySettings != 'none' ?
+        displaySettings = 'none' :
+        displaySettings = 'flex'
     }
 
+    function chaptersDisplay(){
+        displayChapter != 'none' ?
+        displayChapter = 'none' :
+        displayChapter = 'flex'
+    }
+
+    function searchDisplayOn(){
+        displaySearch = 'initial'
+    }
+    function searchDisplayOff(){
+        isSearch ?
+        null :
+        displaySearch = 'none'
+    }
 
     function displayDefine(define, positionReq) {
         const x = define[positionReq];
@@ -176,10 +193,23 @@
             activateStop = false
             stopCheck.checked = false
             desiredPosition = chapterIndex
-            displaySearch = 'none'
+            displayChapter = 'none'
         }
         else {
             desiredPosition = chapterIndex
+            displayChapter = 'none'
+        }
+    }
+    function searchSwitch(sindex) {
+        const sindexInt = parseInt(sindex)
+        if (activateStop != false) {
+            activateStop = false
+            stopCheck.checked = false
+            desiredPosition = sindexInt
+            displaySearch = 'none'
+        }
+        else {
+            desiredPosition = sindexInt
             displaySearch = 'none'
         }
     }
@@ -294,7 +324,8 @@
             realIDs.push(tempIn)
         })
 
-        return searchResFormat.map((x, i) => x.concat(realIDs[i].sort((a, b)=> a - b).toString().replaceAll(',',' | '))) 
+        const giveReturn = searchResFormat.map((x, i) => x.concat(realIDs[i].sort((a, b)=> a - b).toString().replaceAll(',',' | '))) 
+        return giveReturn.map(x => [x[1],x[3].split(' | ')])
     }
     
     // gets the data
@@ -360,6 +391,9 @@
                     countSyn++
                 }
             })
+            giveReturn > 0 ?
+            isSearch = true :
+            null
             return giveReturn
         }
 
@@ -506,37 +540,62 @@
             </p>
         {/if}
         {#await gatherUserInput(position, synsetDefines)}
-            <div class='controls'>
-                <div style='display:flex;'>
-                    <input type='number' name='WPM' min='60' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 60 ? validateWPM = 60 : validateWPM == null ? validateWPM = 60 : null}} bind:value={validateWPM}>
-                    <input type='button' class='desired-button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
+            <div style='cursor:pointer;display:flex;flex-direction: row;justify-content: flex-start;align-items:center'>
+                <div class='settings-padding' style='' />
+                <label for='SETTINGS:'>SETTINGS:</label>
+                <button class='settings' name='SETTINGS' on:click={()=>settingsDisplay()}>
+                    <Gear style='color:#80d000;width:12px;height:12px'/>
+                </button>         
+            </div>
+            <div class='controls' style='display:{displaySettings}'>
+                <div class='controls-padding' style='' />
+                <div class='inputs' style=''>
+                    <div style='display:flex;'>
+                        <input type='number' name='WPM' min='60' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 60 ? validateWPM = 60 : validateWPM == null ? validateWPM = 60 : null}} bind:value={validateWPM}>
+                        <input type='button' class='desired-button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
+                    </div>
+                    <div style='display:flex;'>
+                        <input type='number' name='INDEX' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
+                        <input type='button' class='desired-button' on:click={()=> fillDesiredPosition(validatePosition) } value='INDEX'>
+                    </div>            
+                    <div style='display:flex; flex-direction:row;'>
+                        <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
+                        <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
+                    </div>    
+                    <button class='dropbtn' on:click={()=> chaptersDisplay()} name='partofSpeech'>CHAPTERS<div class='arrow' /></button>
+                    <div class='dropdown-container' style='display:{displayChapter}'>
+                        {#each lexPartArray as lexPart}
+                            <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
+                        {/each}
+                    </div>
+                    <div style='display:flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
+                        <label for='REVERSE'>REVERSE:</label> 
+                        <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
+                        <label for='STOP'>STOP:</label> 
+                        <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))} bind:this={stopCheck}>
+                    </div>
+                    <div style='display=flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
+                        <MagnifyingGlass style='top:3px; position:relative; color:#bbbbbb' />
+                        <input type='search' class='search-input' placeholder='>>' on:focus={()=> searchDisplayOn()} on:blur={()=> searchDisplayOff()} bind:value={searchTerm} name='SEARCH'>
+                    </div>
+                    <div class='search-results-container' style='display:{displaySearch}'>
+                        {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
+                                {#each result as searchDisp}
+                                    <label for='memberIndex'>{searchDisp[0]}</label>
+                                    <div name='memberIndex' class='member-index'>
+                                        {#each searchDisp[1] as searchIndex}
+                                            <button class='search-contents' on:click={()=> searchSwitch(searchIndex)}>@{searchIndex}</button>
+                                        {/each}
+                                    </div>
+                                {/each}
+                        {/await}
+                    </div>
                 </div>
-                <div style='display:flex;'>
-                    <input type='number' name='INDEX' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
-                    <input type='button' class='desired-button' on:click={()=> fillDesiredPosition(validatePosition) } value='INDEX'>
-                </div>            
-                <div style='display:flex; flex-direction:row;'>
-                    <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
-                    <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
-                </div>    
-                <button class='dropbtn' on:click={()=> chaptersDisplay()} name='partofSpeech'>CHAPTERS<div class='arrow' /></button>
-                <div class='dropdown-container' style='display:{displaySearch}'>
-                    {#each lexPartArray as lexPart}
-                        <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
-                    {/each}
-                </div>
-                <div style='display:flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
-                    <label for='REVERSE'>REVERSE:</label> 
-                    <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
-                    <label for='STOP'>STOP:</label> 
-                    <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))} bind:this={stopCheck}>
-                </div>
-                <div style='display=flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
-                    <MagnifyingGlass style='top:3px; position:relative' />
-                    <input type='search' class='search-input' placeholder='>>' bind:value={searchTerm} name='SEARCH'>
-                </div>
-            </div> 
-            <progress class='this-prog' style='' value={position + 1} max={synsetsLength} />
+                <div class='controls-padding' style='' />
+            </div>
+            <div class='this-prog-containter'>
+                <progress class='this-prog' style='' value={position + 1} max={synsetsLength} />
+            </div>
             <p>
                 <small>{pos}</small>
             </p>
@@ -553,26 +612,14 @@
                     {definition}
                 </p>
             </div>
-           
+
 
         {/await}
-        {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
-            <div>
-                {#each result as searchDisp}
-                    <p>
-                        <small>Part of speech:</small> {searchDisp[1]}
-                        <br/>
-                        <small>Index:</small> {searchDisp[3]} 
-                    </p>
-                {/each}
-            </div>
-        {/await}
+
     </main>
 </div>
 
 <style>
-
-    
     progress {
         /* Reset the default appearance */
         -webkit-appearance: none;
@@ -582,7 +629,7 @@
     .this-prog {
         background-color:#dddddd;
         border: none;
-        width: 148px;
+        width: 149px;
         height: 9px;
     }
     .this-prog::-webkit-progress-bar {
@@ -594,12 +641,15 @@
     .this-prog[value]::-webkit-progress-value {
         background-color: #80d000
     }
+    .this-prog-container {
+        border:none;
+    }
 
     .search-input {
         height: 16px;
         width: 129px;
         color: #80d000;
-        margin: 0px 0px 0px 0px;
+        margin: 0px 0px 4px 0px;
         box-sizing: border-box;
         font-family: 'Arial';
         font-size: 10px;
@@ -612,9 +662,43 @@
         outline: #80d000 solid 1px;
         outline-offset: none;
         border-style: none;
-
     }
-
+    
+    .search-results-container {
+        outline: #eeeeee solid 1px;
+        width: 148px;
+        max-height: 135px;
+        background-color: white;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, .2);
+        position:absolute;
+        overflow-y: scroll;
+        z-index: 1;
+    }
+    .member-index {
+        display: flex;
+        flex-direction: column;
+        justify-content: left;
+    }
+    .search-contents {
+        text-align: left;
+        padding: 0px 2px;
+        box-sizing: border-box;
+        color: #80d000;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        font-weight: bold;
+        text-transform: uppercase;        
+        background-color: white;
+        border-radius: none;
+        outline-offset: none;
+        border-style: none;
+        cursor: pointer;
+    }
+    .search-contents:hover {
+        color:white;
+        background-color: black;
+    }
     ::placeholder {
         opacity: 1.0;
         color: #80d000
@@ -668,7 +752,7 @@
     .step-button {
         height: 16px;
         min-width:72px;
-        margin: 0px 4px 5px 0px;
+        margin: 0px 4px 4px 0px;
         box-sizing: border-box;
         color: #80d000;
         font-family: 'Arial';
@@ -761,7 +845,6 @@
         align-items: center;
 
     }
-
     input[type='checkbox']:checked {
         display:grid;
         grid-template-areas: "select";
@@ -774,6 +857,44 @@
         clip-path: polygon(20% 0%, 0% 20%, 30% 50%, 0% 80%, 20% 100%, 50% 70%, 80% 100%, 100% 80%, 70% 50%, 100% 20%, 80% 0%, 50% 30%);
         background-color:#80d000;
         grid-area: select
+    }
+    .controls {
+        display:none;
+        flex-direction: row;
+        justify-content: flex-start;
+
+    }
+    .settings {
+        align-items: center;
+        height: 16px;
+        width: 16x;
+        margin: 0px 0px 4px 4px;
+        padding: 2px;
+        box-sizing: border-box;
+        color: #80d000;
+        font-family: 'Arial';
+        font-size: 10px;
+        letter-spacing: .05em;
+        line-height: 1.25em;
+        font-weight: bold;
+        text-transform: uppercase;        
+        background-color: white;
+        border-radius: none;
+        outline: #80d000 solid 1px;
+        outline-offset: none;
+        border-style: none;
+        cursor: pointer;
+    }
+    .controls-padding {
+        width:225px;
+        min-width:0%
+    }
+    .inputs {
+        border:none;
+    }
+    .settings-padding {
+        width:100%;
+        min-width: 70px
     }
 
 </style>
