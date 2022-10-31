@@ -555,35 +555,20 @@
 
 <div style='display:flex; justify-content:center'>
     <main style='width:600px; height:auto; border:18px solid black; padding:18px; overflow:hidden'>
-            <div style='width=100%;height:128px;background-color:green'>
-                <div style='display:flex; width:100%; height:128px;'>
-               
-                <div style='width:204px; min-width: 0px'></div>
-                
-                <div>
-                {#each loaderRange as frameIndex}
-                    <img class='loading-img' id='loading-frame-{frameIndex[0]}' style='' src='rsvp-synsets-loader/rsvp-synsets-loader_{frameIndex[1]}.svg' alt='animation of letters per frame at 60hz'>
-                {/each}
-                </div>
-
-                <div style='min-width:204px;'></div>
-
+        <noscript>This page requires JavaScript.</noscript>
+        {#if synsetDefines == undefined}                
+            <div class='loading-anim' style='display:flex; width:100%; height:64px; justify-content:center;'>
+                <div class=loading-img-container style='display:flex;justify-content:center;position:absolute;width:96px;height:64px;'>
+                    {#each loaderRange as frameIndex}
+                        <img class='loading-img' id='loading-frame-{frameIndex[0]}' style='' src='rsvp-synsets-loader/rsvp-synsets-loader_{frameIndex[1]}.svg' alt='animation of letters per frame at 60hz'>
+                    {/each}
+                 </div>
             </div>   
-             </div>
             <div style='display:flex;flex-direction:column;align-items:center'>   
-                <!--
-                {#await animateLoader(loaderIndex)}
-                    <img class='loading-img' style='height:25%;width:25%' src='rsvp-synsets-loader/test-loader ({loaderIndex}).svg' alt='animation of letters per frame at 60hz'>
-                {/await}
-                --> 
- 
                 <p class='loading' style='text-align:center'>
                     Loading Synsets
                 </p>
             </div>
-        <noscript>This page requires JavaScript.</noscript>
-        {#if synsetDefines == undefined}                
-
         {/if}
         {#await gatherUserInput(position, synsetDefines)}
             <div style='cursor:pointer;display:flex;flex-direction: row;justify-content: flex-start;align-items:center'>
@@ -982,11 +967,25 @@
     .loading-img {
         opacity: 0;
         position:absolute;
-        height:128px;
-        width:192px;
+        height:100%;
+        width:100%;
         filter:brightness(1.1);
+        z-index: -1;
         
     }
+
+    @media only screen and (max-width: 98px) {
+
+        .loading-img-container {
+            max-width: 48px;
+            max-height: 32px
+        }
+        .loading-anim {
+            max-height: 32px
+        }
+
+    } 
+
     #loading-frame-1 {
         animation: animateFrames 4800ms steps(2, jump-none) 0s infinite reverse;
     }
