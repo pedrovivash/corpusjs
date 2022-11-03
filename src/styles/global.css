@@ -43,7 +43,7 @@ p {
     line-height: 1.5em;
     font-weight: normal;
 }
-small, label, img {
+small, label, img, noscript {
     color: #bbbbbb;
     font-family: 'Arial';
     font-size: 10px;

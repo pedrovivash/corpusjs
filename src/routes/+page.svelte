@@ -95,7 +95,7 @@
     let activateReverse = false
     let activateStop = false
     let previousWPM = 0
-    let previousPosition = 0
+    let previousPosition = -1
     let previousReverse = false
 
     // search handling
@@ -105,10 +105,17 @@
     let displaySettings = 'none'
     let displaySearch = 'none'
     let isResults = false
+    let isChapters = false 
+    let isChaptersUp = false
+    let isIndex = false
+    let isResultsUp = false
 
     // other
     let delay
     let stopCheck
+    let searchCheck
+    let chaptersCheck
+    let restop = false
     let loaderIndex = 1
 
     const loaderRange = Array(65).fill('x',0,65).map( (x, i )=> [i+1,(i+1).toString().padStart(2, '0')])
@@ -143,20 +150,34 @@
         displaySettings = 'flex'
     }
 
-    function chaptersDisplay(){
-        displayChapter != 'none' ?
-        displayChapter = 'none' :
+    function chaptersDisplayOn(){
         displayChapter = 'flex'
     }
 
+    function chaptersDisplayOff(){
+        isChapters ?
+        null :
+        [displayChapter, isChapters] = ['none', false]
+    }
+    function chaptershMouseOff(){
+        displayChapter = 'none'
+        isChapters = false
+        chaptersCheck.blur()
+    }
+    
     function searchDisplayOn(){
         displaySearch = 'initial'
     }
     function searchDisplayOff(){
-        console.log(isResults)
-        isResults ?
+        isResults  ?
         null :
+        [displaySearch, isResults] = ['none', false]
+        
+    }
+    function searchMouseOff(){
         displaySearch = 'none'
+        isResults = false
+        searchCheck.blur()
     }
 
     function displayDefine(define, positionReq) {
@@ -195,28 +216,45 @@
         if (activateStop != false) {
             activateStop = false
             stopCheck.checked = false
-            desiredPosition = chapterIndex
-            displayChapter = 'none'
-        }
+            isResultsUp != true ?
+            null :
+            positionTransfer++
+            desiredPosition = chapterIndex 
+            displaySearch = 'none'}
         else {
-            desiredPosition = chapterIndex
-            displayChapter = 'none'
+            positionTransfer++
+            desiredPosition = chapterIndex 
+            displaySearch = 'none'
         }
+        desiredPosition == positionTransfer ?
+        positionTransfer++ :
+        null       
+        restop = true
+        isChapters = false
+        isChaptersUp = true
     }
+
     function searchSwitch(sindex) {
-        const sindexInt = parseInt(sindex)
+        const sindexInt = sindex[0]
         if (activateStop != false) {
             activateStop = false
             stopCheck.checked = false
-            desiredPosition = sindexInt
-            displaySearch = 'none'
-            
-        }
+            isResultsUp != true ?
+            null :
+            positionTransfer++
+            desiredPosition = sindexInt 
+            displaySearch = 'none'}
         else {
-            desiredPosition = sindexInt
+            positionTransfer++
+            desiredPosition = sindexInt 
             displaySearch = 'none'
-            
         }
+        desiredPosition == positionTransfer ?
+        positionTransfer++ :
+        null       
+        restop = true
+        isResults = false
+        isResultsUp = true
     }
 
     function fillDesiredPosition(aPosition) {
@@ -232,6 +270,8 @@
             desiredPosition = aPosition : 
             positionTransfer++
         }
+        restop = true
+        isIndex = true
     }
 
     // calling the input
@@ -258,9 +298,24 @@
         */
         if (activateStop == false) {
             // user input index handling
-            if (positionTransfer != desiredPosition ) {
+            if (position == desiredPosition && restop == true) {
+                position++
+                position--
+                isIndex ?
+                [isIndex, positionTransfer] = [false, desiredPosition] :
+                isResultsUp ?
+                [isResultsUp, positionTransfer] = [false, desiredPosition] :
+                isChaptersUp ?
+                [isChaptersUp, positionTransfer] = [false, desiredPosition] :
+                null ; 
+                [activateStop, restop, stopCheck.checked] = [true, false, true]
+            }
+            else if (positionTransfer != desiredPosition && position != desiredPosition) {
                 position = desiredPosition
                 positionTransfer = desiredPosition
+                if (restop == true) {
+                    [activateStop, restop, stopCheck.checked] = [true, false, true]
+                }
             }
             // looping the display 
             else if (position == synsetsLength - 1) {
@@ -333,21 +388,26 @@
         
         searchResFormat.forEach(y => {
             let tempIn = []
-            y[2].forEach(z => {
-                function getIndex(synsetTest) {
+            y[2].forEach( (z) => {
+                function getIndex(synsetTest) {                    
                     return z == synsetTest[3] 
                 }
-                tempIn.push(synsetsArray.find(getIndex)[4])
+                const count = synsetsArray.filter(getIndex).length
+                const idToID = synsetsArray.find(getIndex)[4]
+                tempIn.push([idToID, (idToID+count-1)])
             })
             realIDs.push(tempIn)
         })
+        const giveReturn = searchResFormat.map((x, i) => x.concat([realIDs[i].sort((a, b)=> a[0] - b[0])]))
+        return giveReturn.map(x => [x[1],x[3]])
+    }
 
-        const giveReturn = searchResFormat.map((x, i) => x.concat(realIDs[i].sort((a, b)=> a - b).toString().replaceAll(',',' | '))) 
-        giveReturn.length > 0 ?
-        isResults = true :
-        isResults = false
-        
-        return giveReturn.map(x => [x[1],x[3].split(' | ')])
+    function formatIndecesRange(aon) {
+        let tempString = ''
+        aon[0] == aon[1] ?
+        tempString = aon[0].toString() :
+        tempString = aon[0].toString()+' - '+aon[1].toString()
+        return tempString
     }
     
     // gets the data
@@ -550,12 +610,52 @@
         the array may need to be flattened for easier traversal
         end state required
         gathering user input
-    */ 
+    */
+   
+    function getLargest(synsets){
+        let members = [] 
+        synsets.forEach(x=> members.push(x[0]))
+        let max = members[0].length
+        
+        members.map(y=> max = Math.max(max, y.length))
+        console.log(max)
+        let longest = members.filter(z=> z.length == max)
+        console.log(longest)
+        return longest
+    }
+    function getLargest2(synsets){
+        let members = [] 
+        synsets.forEach(x=> members.push(x[2]))
+        let max = members[0].length
+        
+        members.map(y=> max = Math.max(max, y.length))
+        console.log(max)
+        let longest = members.filter(z=> z.length == max)
+        console.log(longest)
+        return longest
+    }    
+    function getLargest3(synsets){
+        let members = [] 
+        synsets.forEach(x=> members.push(x[0].split(' ')))
+        members = members.flat()
+        members = members.map(a=> a.split('-')).flat()
+        let max = members[0].length
+        
+        members.map(y=> {
+            y.length < 32 ?
+            max = Math.max(max, y.length) :
+            null
+        })
+        console.log(max)
+        let longest = members.filter(z=> z.length == max)
+        console.log(longest)
+        return longest
+    }
 </script>
 
 <div style='display:flex; justify-content:center'>
     <main style='width:600px; height:auto; border:18px solid black; padding:18px; overflow:hidden'>
-        <noscript>This page requires JavaScript.</noscript>
+        <noscript><div style='text-align:center; padding:0px 0px 20px 0px'>This page requires JavaScript.</div></noscript>    
         {#if synsetDefines == undefined}                
             <div class='loading-anim' style='display:flex; width:100%; height:64px; justify-content:center;'>
                 <div class=loading-img-container style='display:flex;justify-content:center;position:absolute;width:96px;height:64px;'>
@@ -593,8 +693,8 @@
                         <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
                         <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
                     </div>    
-                    <button class='dropbtn' on:click={()=> chaptersDisplay()} name='partofSpeech'>CHAPTERS<div class='arrow' /></button>
-                    <div class='dropdown-container' on:mouseleave={()=> displayChapter = 'none'} style='display:{displayChapter}'>
+                    <button class='dropbtn' on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>CHAPTERS<div class='arrow' /></button>
+                    <div class='dropdown-container' on:pointerenter={()=> isChapters = true} on:mouseleave={()=> chaptershMouseOff()} style='display:{displayChapter}'>
                         {#each lexPartArray as lexPart}
                             <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
                         {/each}
@@ -607,16 +707,16 @@
                     </div>
                     <div style='display=flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
                         <MagnifyingGlass style='top:3px; position:relative; color:#bbbbbb' />
-                        <input type='search' class='search-input' autocomplete='off' placeholder='>>' on:focus={()=> searchDisplayOn()} on:blur={()=> searchDisplayOff()} bind:value={searchTerm} name='SEARCH'>
+                        <input type='search' class='search-input' autocomplete='off' placeholder='>>' on:focus={()=> searchDisplayOn()} on:blur={()=> searchDisplayOff()} bind:this={searchCheck} bind:value={searchTerm} name='SEARCH'>
                     </div>
-                    <div class='search-results-container' on:mouseleave={()=> displaySearch = 'none'} style='display:{displaySearch}'>
+                    <div class='search-results-container' on:pointerenter={()=> isResults=true} on:mouseleave={()=> searchMouseOff()} style='display:{displaySearch}'>
                         {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
                             {#if result.length > 0} 
                                 {#each result as searchDisp}
                                     <label for='memberIndex'>{searchDisp[0]}</label>
                                     <div name='memberIndex' class='member-index'>
                                         {#each searchDisp[1] as searchIndex}
-                                            <button class='search-contents' on:click={()=> searchSwitch(searchIndex)}>@{searchIndex}</button>
+                                            <button class='search-contents' on:click={()=> searchSwitch(searchIndex)}>@{formatIndecesRange(searchIndex)}</button>
                                         {/each}
                                     </div>
                                 {/each}
@@ -632,8 +732,8 @@
             <p>
                 <small>{pos}</small>
             </p>
-            <div style='height:76px;background-color:black;text-align:center;padding:10px 0px 0px 0px;'>
-                <h1 style='text-transform:none;color:white;line-height:1rem;letter-spacing:-.05rem;font-size:20px'>
+            <div class='member-container' >
+                <h1 class='member' style=''>
                     {member}
                 </h1>
             </div>
@@ -670,10 +770,10 @@
         background-color:#dddddd
     }
     .this-prog[value]::-moz-progress-bar {
-        background-color: #80d000
+        background-color: black
     }
     .this-prog[value]::-webkit-progress-value {
-        background-color: #80d000
+        background-color: black
     }
     .this-prog-container {
         border:none;
@@ -949,15 +1049,25 @@
         outline-offset: -1px;
     }
 
-    @keyframes animateFrames {
-    0%    { opacity: 0; }
-    96%    { opacity: 0;  }
-    99%    { opacity: 1; } 
-    100%  { opacity: 0; }
+    .settings:focus,
+    input[type=number]:focus,
+    .desired-button:focus,
+    .step-button:focus,
+    .dropbtn:focus,
+    input[type=checkbox]:focus,
+    .search-input:focus {
+        outline: #c5f17e solid 3px;
+        outline-offset: -1px;
     }
-      @keyframes fade {
-    0%    { opacity: 0; }
-    100%    { opacity: 1; }
+    @keyframes animateFrames {
+        0%    { opacity: 0; }
+        96%    { opacity: 0;  }
+        99%    { opacity: 1; } 
+        100%  { opacity: 0; }
+    }
+    @keyframes fade {
+        0%    { opacity: 0; }
+        100%    { opacity: 1; }
 
     }
     .loading {
@@ -985,6 +1095,18 @@
         }
 
     } 
+
+    @media only screen and (max-width: 50px) {
+
+        .loading-img-container {
+            max-width: 48px;
+            max-height: 32px
+        }
+        .loading-anim {
+            max-height: 32px
+        }
+
+    }
 
     #loading-frame-1 {
         animation: animateFrames 4800ms steps(2, jump-none) 0s infinite reverse;
@@ -1182,5 +1304,27 @@
         animation: animateFrames 4800ms steps(2, jump-none) 4800ms infinite reverse;
     }
 
+    .member-container {
+        min-height:66px;
+        background-color:black;
+        text-align:center;
+        padding:10px 0px 10px 0px;
+        word-break:break-word;
+    }
 
+    @media only screen and (max-width: 185px) {
+
+        .member-container {
+            word-break:normal
+        }
+
+    } 
+
+    .member {
+        text-transform:none;
+        color:white;
+        line-height:1rem;
+        letter-spacing:-0.05rem;
+        font-size:20px
+    }
 </style>
