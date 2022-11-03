@@ -761,13 +761,13 @@
         appearance: none
     }
     .this-prog {
-        background-color:#dddddd;
+        background-color:#eeeeee;
         border: none;
         width: 149px;
         height: 9px;
     }
     .this-prog::-webkit-progress-bar {
-        background-color:#dddddd
+        background-color:#eeeeee
     }
     .this-prog[value]::-moz-progress-bar {
         background-color: black
@@ -1306,10 +1306,11 @@
 
     .member-container {
         min-height:66px;
-        background-color:black;
+        background-color: #eeeeee;
         text-align:center;
         padding:10px 0px 10px 0px;
         word-break:break-word;
+
     }
 
     @media only screen and (max-width: 185px) {
@@ -1322,7 +1323,7 @@
 
     .member {
         text-transform:none;
-        color:white;
+        color:black;
         line-height:1rem;
         letter-spacing:-0.05rem;
         font-size:20px
