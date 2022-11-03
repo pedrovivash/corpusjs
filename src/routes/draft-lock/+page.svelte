@@ -4,19 +4,26 @@
     import '../styles/global.css'
     import {MagnifyingGlass, Gear} from 'radix-icons-svelte'
 
-    // loading fast-xml-parser
+    console.clear()
 
-    // ...options for the fxp
-    // -missing attrbibuteNamePrefix: "@_"
+    // missing attrbibuteNamePrefix: "@_"
     const options = {
         ignoreAttributes: false,
         ignorePiTags: true
     }
     const parser = new fxp.XMLParser(options)
 
+    
+    function rsvpMeasure(word, targetWPM, avgLength = avgMemberLength) {
+        const millisecond = 1000
+        const avgEngWordLength = 5.2
+        const avgWordLength = avgLength
+        const chunkLength = word.length
+        const reserveTime = (1/((targetWPM*avgLength)/60))*chunkLength
+        return reserveTime*millisecond
+    }
+    
     // synset handling
-
-    // ...a list of the topics as were defined by globalwordnet that organizes the synsets
     const lexPartList = [
         'adj.all',
         'adj.pert',
@@ -63,28 +70,23 @@
         'verb.social',
         'verb.stative',
         'verb.weather']
-
-    // ...catches the lexical entries
     let lexPartArray = []    
     let lexicalSearchTerms
-
-    // ...catches the synsets and calculates the mean characters per member
     let synsetDefines
     let synsetsLength = 0
     let sumMembersLengths = 0
     let avgMemberLength = 10
-    
-    // ... display stores used in the HTML
+    let wordnet
     let position = 0
     let member = ''
+    let previousMember = ''
     let pos = ''
     let definition = ''
 
     // inputs
-
-    // ...every UI element needs a temp variable to store its values. A number of the functions require shared variables. 
     let validateWPM = 60
     let desiredWPM = 60
+    let wpmTransfer = 60
     let validatePosition = 0
     let desiredPosition = 0
     let positionTransfer = 0
@@ -92,76 +94,208 @@
     let stepPositionDown = false 
     let activateReverse = false
     let activateStop = false
-    
-    // ...CSS handling for menus 
-    let displayChapter = 'none'
-    let displaySettings = 'none'
-    let displaySearch = 'none'
-    
-    // ...switches to direct the counter and to remove menus from display
-    let isResults = false
-    let isResultsUp = false
-    let isChapters = false 
-    let isChaptersUp = false
-    let isIndex = false
-    let restop = false
+    let previousWPM = 0
+    let previousPosition = -1
+    let previousReverse = false
 
     // search handling
     let searchTerm = ''
+    let displayChapter = 'none'
+    let displayControls = 'none'
+    let displaySettings = 'none'
+    let displaySearch = 'none'
+    let isResults = false
+    let isChapters = false 
+    let isChaptersUp = false
+    let isIndex = false
+    let isResultsUp = false
 
-    // bindings
-
-    // ...for timeout
+    // other
     let delay
-
-    // ...for HTML elements
     let stopCheck
     let searchCheck
     let chaptersCheck
+    let restop = false
+    let loaderIndex = 1
 
-    // animation
-
-    // ...loading graphic
     const loaderRange = Array(65).fill('x',0,65).map( (x, i )=> [i+1,(i+1).toString().padStart(2, '0')])
-
-
-    // functions, part 1 | core functions
-
-    // ...measures the RSVP delay
-    // -requires more precice measurement that calls the following members lengths up to n words per 60 seconds
-    function rsvpMeasure(word, targetWPM, avgLength = avgMemberLength) {
-        const millisecond = 1000
-        const avgEngWordLength = 5.2
-        const avgWordLength = avgLength
-        const chunkLength = word.length
-        const reserveTime = (1/((targetWPM*avgLength)/60))*chunkLength
-        return reserveTime*millisecond
+    
+    // serves the data
+    /* BUGS
+    async function displayAllDefines(definesProc, wpmReq, positionReq, reverseReq) {
+        let ii = 1 + positionReq
+        let jCopy = 0
+        let defines
+        reverseReq != true ?
+        defines = definesProc.slice(ii - 1) :
+        defines = definesProc.slice(ii).reverse()
+        for (const [i, x] of defines.entries()) {    
+            for (const [j, y] of x.entries()) {
+                ii++
+                [position, member, pos, definition] = [ii, y[0], y[1], y[2]]
+                i != 0 && j > 0 ?
+                previousMember = x[j-1][0] :
+                j == 0 && i >= 1 ?
+                previousMember = defines[i-1][jCopy][0] :
+                null
+                await new Promise(r => setTimeout(r, rsvpMeasure(member, wpmReq)))
+                jCopy = j
+            }
+        }
+    }
+    */
+    function settingsDisplay() {
+        displaySettings != 'none' ?
+        displaySettings = 'none' :
+        displaySettings = 'flex'
     }
 
-    // ...fills the display stores
+    function chaptersDisplayOn(){
+        displayChapter = 'flex'
+    }
+
+    function chaptersDisplayOff(){
+        isChapters ?
+        null :
+        [displayChapter, isChapters] = ['none', false]
+    }
+    function chaptershMouseOff(){
+        displayChapter = 'none'
+        isChapters = false
+        chaptersCheck.blur()
+    }
+    
+    function searchDisplayOn(){
+        displaySearch = 'initial'
+    }
+    function searchDisplayOff(){
+        isResults  ?
+        null :
+        [displaySearch, isResults] = ['none', false]
+        
+    }
+    function searchMouseOff(){
+        displaySearch = 'none'
+        isResults = false
+        searchCheck.blur()
+    }
+
     function displayDefine(define, positionReq) {
         const x = define[positionReq];
         [member, pos, definition] = [x[0], x[1], x[2]]
     }
-
-    // ...delay handling asynchronously
+   
+    // delay handling in async
     function createDelay(intrpt = desiredWPM) {
+        //intrpt == 0 ?
+        //delay =  new Promise(r => setTimeout(r, rsvpMeasure(member, intrpt))):
         delay =  new Promise(r => setTimeout(r, rsvpMeasure(member, intrpt)))
+        
     }
-    
-    // ...cancel delay
     function cancelDelay() {
         clearTimeout(delay)
     }
 
-    // ...calls the input, forces the HTML to display a different array, handles the delay, handles the direction of the next position
+    
+    function stepPosition(gate) {
+        switch (gate) {
+            case 'up':
+                activateStop = true
+                stopCheck.checked = true
+                stepPositionUp = true 
+                break
+            case 'down':
+                activateStop = true
+                stopCheck.checked = true
+                stepPositionDown = true
+                break
+        }
+    }
+      
+    function chapterSwitch(chapterIndex) {
+        if (activateStop != false) {
+            activateStop = false
+            stopCheck.checked = false
+            isResultsUp != true ?
+            null :
+            positionTransfer++
+            desiredPosition = chapterIndex 
+            displaySearch = 'none'}
+        else {
+            positionTransfer++
+            desiredPosition = chapterIndex 
+            displaySearch = 'none'
+        }
+        desiredPosition == positionTransfer ?
+        positionTransfer++ :
+        null       
+        restop = true
+        isChapters = false
+        isChaptersUp = true
+    }
+
+    function searchSwitch(sindex) {
+        const sindexInt = sindex[0]
+        if (activateStop != false) {
+            activateStop = false
+            stopCheck.checked = false
+            isResultsUp != true ?
+            null :
+            positionTransfer++
+            desiredPosition = sindexInt 
+            displaySearch = 'none'}
+        else {
+            positionTransfer++
+            desiredPosition = sindexInt 
+            displaySearch = 'none'
+        }
+        desiredPosition == positionTransfer ?
+        positionTransfer++ :
+        null       
+        restop = true
+        isResults = false
+        isResultsUp = true
+    }
+
+    function fillDesiredPosition(aPosition) {
+        if (activateStop != false) {
+            activateStop = false
+            stopCheck.checked = false
+            desiredPosition != aPosition ? 
+            desiredPosition = aPosition : 
+            positionTransfer++
+        }
+        else {
+            desiredPosition != aPosition ? 
+            desiredPosition = aPosition : 
+            positionTransfer++
+        }
+        restop = true
+        isIndex = true
+    }
+
+    // calling the input
     async function gatherUserInput(positionIn, definesIn) {    
 
         cancelDelay()
         displayDefine(definesIn, positionIn)
         createDelay()
         await delay
-
+        
+        /* incorrect, the step cannot interrupt the display like this
+        if (stepPositionUp == true || stepPositionDown == true) {
+            wpmTransfer = desiredWPM
+            desiredWPM = 0            
+            if (stepPositionUp) {
+                position++ 
+                stepPositionUp = false
+            }
+            else if (stepPositionDown == true) { 
+                position--
+                stepPositionDown = false 
+            }            
+        }
+        */
         if (activateStop == false) {
             // user input index handling
             if (position == desiredPosition && restop == true) {
@@ -217,96 +351,25 @@
                 position--
             }
         }       
-
-    }
-
-
-    // functions, part 2 | UI controls
-
-    // ...index stepping +/- 1
-    function stepPosition(gate) {
-        switch (gate) {
-            case 'up':
-                activateStop = true
-                stopCheck.checked = true
-                stepPositionUp = true 
-                break
-            case 'down':
-                activateStop = true
-                stopCheck.checked = true
-                stepPositionDown = true
-                break
-        }
+        
     }
     
-    // ...jump to another topic
-    function chapterSwitch(chapterIndex) {
-        if (activateStop != false) {
-            activateStop = false
-            stopCheck.checked = false
-            isResultsUp != true ?
-            null :
-            positionTransfer++
-            desiredPosition = chapterIndex 
-            displaySearch = 'none'}
-        else {
-            positionTransfer++
-            desiredPosition = chapterIndex 
-            displaySearch = 'none'
-        }
-        desiredPosition == positionTransfer ?
-        positionTransfer++ :
-        null       
-        restop = true
-        isChapters = false
-        isChaptersUp = true
+    // loader animate
+
+    async function animateLoader(frameIn) {    
+
+        cancelDelay()
+        createDelay(60)
+        await delay
+        let frame = frameIn
+        frame == 2 ?
+        frame = 1 :
+        frame++
+        loaderIndex = frame
+
     }
 
-    // ...jump to the start of a synset range per member search request
-    function searchSwitch(sindex) {
-        const sindexInt = sindex[0]
-        if (activateStop != false) {
-            activateStop = false
-            stopCheck.checked = false
-            isResultsUp != true ?
-            null :
-            positionTransfer++
-            desiredPosition = sindexInt 
-            displaySearch = 'none'}
-        else {
-            positionTransfer++
-            desiredPosition = sindexInt 
-            displaySearch = 'none'
-        }
-        desiredPosition == positionTransfer ?
-        positionTransfer++ :
-        null       
-        restop = true
-        isResults = false
-        isResultsUp = true
-    }
-
-    // ...jump to specified index
-    function fillDesiredPosition(aPosition) {
-        if (activateStop != false) {
-            activateStop = false
-            stopCheck.checked = false
-            desiredPosition != aPosition ? 
-            desiredPosition = aPosition : 
-            positionTransfer++
-        }
-        else {
-            desiredPosition != aPosition ? 
-            desiredPosition = aPosition : 
-            positionTransfer++
-        }
-        restop = true
-        isIndex = true
-    }
-
-    // functions, part 3 | search
-
-    // ...search members within the array of all synsets
+    // search members
     async function searchTermReturn(term, aoaoa, synsetsArray){
         const translatePOS = {
             'n': 'noun',
@@ -316,10 +379,10 @@
             's': 'adjective'
         }
         
-        function lexicalLookup(lexicalTerm) {
+        function testSearch(lexicalTerm) {
            return term.trim() == lexicalTerm[0]
         }
-        const searchReturn = aoaoa.filter(lexicalLookup)
+        const searchReturn = aoaoa.filter(testSearch)
         const searchResFormat = searchReturn.map(x => [x[0], translatePOS[x[1]], x[2]])
         let realIDs = []
         
@@ -339,7 +402,6 @@
         return giveReturn.map(x => [x[1],x[3]])
     }
 
-    // ...formats indeces range for search results
     function formatIndecesRange(aon) {
         let tempString = ''
         aon[0] == aon[1] ?
@@ -348,67 +410,43 @@
         return tempString
     }
     
-    // functions, part 4 | CSS and bindings
-
-    // ...settings CSS
-    function settingsDisplay() {
-        displaySettings != 'none' ?
-        displaySettings = 'none' :
-        displaySettings = 'flex'
-    }
-
-    // ...topics CSS
-    function chaptersDisplayOn(){
-        displayChapter = 'flex'
-    }
-
-    function chaptersDisplayOff(){
-        isChapters ?
-        null :
-        [displayChapter, isChapters] = ['none', false]
-    }
-    function chaptershMouseOff(){
-        displayChapter = 'none'
-        isChapters = false
-        chaptersCheck.blur()
-    }
-    
-    // ...search CSS
-    function searchDisplayOn(){
-        displaySearch = 'initial'
-    }
-    function searchDisplayOff(){
-        isResults  ?
-        null :
-        [displaySearch, isResults] = ['none', false]
-        
-    }
-    function searchMouseOff(){
-        displaySearch = 'none'
-        isResults = false
-        searchCheck.blur()
-    }
-
-    // functions, part 5 | loading data
-
-    // ...gets the data
+    // gets the data
     onMount(async () => {
         
-        // ...fetching xml and converting > text > JSobj
+        // fetching xml and converting > text > JSobj
         const response = await fetch('/wn.xml')
         const text = await response.text()
         const wordnet = parser.parse(text)
         const lexicals = wordnet.LexicalResource.Lexicon.LexicalEntry
         const synsets = wordnet.LexicalResource.Lexicon.Synset
-        // -(useful but not needed) const syntax = wordnet.LexicalResource.Lexicon.SyntacticBehaviour
+        const syntax = wordnet.LexicalResource.Lexicon.SyntacticBehaviour
+        let synsetsPerEntry
         
-        // -validate XML needed
+        
+        /*
+        legend:
+            aoo: array of objects
+            aoaoa: array (of arrays) ** 2
+            off: offset
+            i: index
+            gate: return value
+            wpm: words per minute (target)
+            avgLegnth: against what the word (param) was sourced from
+        */
 
-        // -update wordnet needed or RestAPI needed. Cache handling?
 
-        // ...see individual Sysnet
+        // validate
 
-        // ...extract nested lexical entries
+        // update wordnet, RestAPI needed
+
+        // see individual Sysnet
+        function flatSynset(aoo, i) {
+            return ((Object.entries(aoo[i])).flat(2).map(x => {
+                return typeof(x) == 'object' ? Object.entries(x) : x
+            }).flat(2))
+        }
+        
+        // extract nested
         function getLexicals (aoo){
             return lexicals.map(x => {
                 const lemma = x['Lemma']['@_writtenForm']
@@ -424,7 +462,6 @@
             })
         }
                
-        // ...extract nested synsets
         function getSynsets(aoo) {
             let giveReturn = []
             let countSyn = 1
@@ -441,9 +478,117 @@
             null
             return giveReturn
         }
+
+        // words per entry with getAllFunc gate params: see switch/case
+        function getSynsetEntries(aoo, i, gate) {
+            const synsetArray = flatSynset(aoo, i)
+            let giveReturn = []
+            let toReturn = []
+            let copy = ''
+            let giveReturnValues = []
+            let giveReturnValue = ''
+            let giveReturnKey = ''
+            const keyConditions = ['Definition', 'SynsetRelation', 'Example', '@_', '#']
+            const defineConditions = ['Definition', '@_members', '@_lexfile']
+            switch (gate) {
+                case 'keys':
+                    synsetArray.filter(x => {                        
+                        keyConditions.some(y => y == x ||  
+                        y == x.slice(0, 2) || 
+                        y == x[0]) ?
+                        giveReturn.push(x) : 
+                        null
+                    })
+                    break
+                case 'values':
+                    synsetArray.filter(x => {
+                        keyConditions.some(y => y == x || 
+                        y == x.slice(0, 2) || 
+                        y == x[0]) ?
+                        null : 
+                        giveReturn.push(x)
+                    })
+                    break
+                // maybe cutting something important out, like SynsetRelation had an aao and I lost it
+                case 'entries':
+                    synsetArray.filter(x => {
+                        keyConditions.some(y => y == x ||  
+                        y == x.slice(0, 2) || 
+                        y == x[0]) ?
+                        giveReturnKey = x : 
+                        giveReturnValues.push(x) 
+                        giveReturnKey != copy ?
+                        [copy, giveReturnValues] = [giveReturnKey, []] :
+                        giveReturn.length == 0 || 
+                        giveReturn[giveReturn.length - 1][0] != giveReturnKey ?
+                        giveReturn[giveReturn.length] = 
+                        [giveReturnKey, giveReturnValues] :
+                        null
+                    })
+                    break
+                case 'define':
+                    synsetArray.filter((x, i) => {
+                        defineConditions.some(y => y == x) ?
+                        giveReturnKey = x :
+                        synsetArray[i - 1] == giveReturnKey ?
+                        giveReturnValue = x :
+                        null
+                        giveReturnValue != '' ?
+                        [giveReturn[giveReturn.length], giveReturnValue] = 
+                        [[giveReturnKey, giveReturnValue], ''] :
+                        null
+                    })
+            }
+            
+            // this effectively pulls whatever you need per array within the flat parent
+            // so, searching?
+            if (gate != 'define') {
+                toReturn = giveReturn
+            }
+            else {
+                //console.log(giveReturn)
+                const membersSplit = giveReturn[1][1].
+                replaceAll('-ap-',"'").
+                split(" ").
+                map(x => x.slice(5, x.length - 2).replaceAll('_',' '))
+                membersSplit.forEach(x => {
+                    toReturn.push([x,
+                    giveReturn[2][1],
+                    giveReturn[0][1]
+                    ])}
+                )
+            }
+            return toReturn
+        }
         
-        // ...function calls
+        // see range of synsets
+        function getDecaFunc(off = 0, aoo = synsets, func = flatSynset, gate = 'entries') {
+            const range = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            return range.map(x => x + off).map(y => func(aoo, y, gate))
+        }
+
+        // see all of synsets
+        function getAllFunc(aoo = synsets, func = flatSynset, gate = 'entries') {
+            const range = aoo.map((x, i) => i)
+            return range.map(y => func(aoo, y, gate))
+        }
+        
+        // for an array of arrays ** 2 return a one level
+        function flattenInterior(aoaoa) {
+            let aoFlatA = []
+            for (const x of aoaoa) {
+                for (const y of x) {
+                    aoFlatA.push(y)
+                }
+            }
+            return aoFlatA
+        }
+        
+        // function calls
+        //console.log(getAllFunc(synsets, getSynsetEntries, 'keys'))
+        //synsetsPerEntry = getAllFunc(synsets, getSynsetEntries, 'define')
         synsetDefines = getSynsets(synsets)
+        //synsetDefines = flattenInterior(synsetsPerEntry)
         synsetDefines.forEach(x => sumMembersLengths += x[0].length)
         avgMemberLength = sumMembersLengths/synsetDefines.length
         synsetDefines.unshift(['a word', 'intro.this', 'a feature of language with often comparable meaning(s) to others like it'])
@@ -453,12 +598,59 @@
                 return synsetArray[1] == lexGroup
             }
             return [synsetDefines.find(testLexPart)[4], lexGroup]
-        })    
+        })
+        
         lexicalSearchTerms = getLexicals(lexicals)
-
+        //console.log(lexicalSearchTerms)
+        //console.log(wordnetArray = flatSynset(synsets,0))
                 
     })
-
+    /*
+        the progress bar needs to take another value when reversed or there's something wrong with position
+        the array may need to be flattened for easier traversal
+        end state required
+        gathering user input
+    */
+   
+    function getLargest(synsets){
+        let members = [] 
+        synsets.forEach(x=> members.push(x[0]))
+        let max = members[0].length
+        
+        members.map(y=> max = Math.max(max, y.length))
+        console.log(max)
+        let longest = members.filter(z=> z.length == max)
+        console.log(longest)
+        return longest
+    }
+    function getLargest2(synsets){
+        let members = [] 
+        synsets.forEach(x=> members.push(x[2]))
+        let max = members[0].length
+        
+        members.map(y=> max = Math.max(max, y.length))
+        console.log(max)
+        let longest = members.filter(z=> z.length == max)
+        console.log(longest)
+        return longest
+    }    
+    function getLargest3(synsets){
+        let members = [] 
+        synsets.forEach(x=> members.push(x[0].split(' ')))
+        members = members.flat()
+        members = members.map(a=> a.split('-')).flat()
+        let max = members[0].length
+        
+        members.map(y=> {
+            y.length < 32 ?
+            max = Math.max(max, y.length) :
+            null
+        })
+        console.log(max)
+        let longest = members.filter(z=> z.length == max)
+        console.log(longest)
+        return longest
+    }
 </script>
 
 <div style='display:flex; justify-content:center'>
@@ -501,7 +693,7 @@
                         <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
                         <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
                     </div>    
-                    <button class='dropbtn' on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>TOPICS<div class='arrow' /></button>
+                    <button class='dropbtn' on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>CHAPTERS<div class='arrow' /></button>
                     <div class='dropdown-container' on:pointerenter={()=> isChapters = true} on:mouseleave={()=> chaptershMouseOff()} style='display:{displayChapter}'>
                         {#each lexPartArray as lexPart}
                             <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
@@ -553,7 +745,10 @@
                     {definition}
                 </p>
             </div>
+
+
         {/await}
+
     </main>
 </div>
 
