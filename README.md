@@ -3,7 +3,10 @@
 A way to quickly read open parts of speech organized by synset groupings.
 
 <strong>Built with:</strong>
-[SvelteKit](https://github.com/sveltejs/kit) and [english-wordnet](https://github.com/globalwordnet/english-wordnet).
+[SvelteKit](https://github.com/sveltejs/kit), [english-wordnet](https://github.com/globalwordnet/english-wordnet) and [fast-xml-parser](https://github.com/NaturalIntelligence/fast-xml-parser).
+
+<strong>Styled with:</strong>
+[radix-icons-svelte](https://github.com/Brisklemonade/radix-icons-svelte)
 
 ## Goal
 
