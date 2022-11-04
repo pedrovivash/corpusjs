@@ -1,6 +1,5 @@
-# rsvp-synsets ![logo](https://rsvp-synsets.vercel.app/favicon.png)
-
-
+![logo](https://rsvp-synsets.vercel.app/favicon.png)
+# rsvp-synsets 
 
 A way to quickly read open parts of speech organized by synset groupings.
 
