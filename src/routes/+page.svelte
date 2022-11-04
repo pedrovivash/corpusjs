@@ -1,8 +1,10 @@
 <script>
     import fxp from "fast-xml-parser"
     import { onMount } from 'svelte'
-    import '../styles/global.css'
     import {MagnifyingGlass, Gear} from 'radix-icons-svelte'
+    import '../styles/global.css'
+    import Nav from '$lib/navbar.svelte'
+    import Footer from '$lib/footer.svelte'
 
     // loading fast-xml-parser
 
@@ -460,8 +462,13 @@
     })
 
 </script>
-
+    <header class='nav-container'>
+        <div>
+            <Nav />
+        </div>
+    </header>
 <div style='display:flex; justify-content:center'>
+
     <main style='width:600px; height:auto; border:18px solid black; padding:18px; overflow:hidden'>
         <noscript><div style='text-align:center; padding:0px 0px 20px 0px'>This page requires JavaScript.</div></noscript>    
         {#if synsetDefines == undefined}                
@@ -556,7 +563,9 @@
         {/await}
     </main>
 </div>
-
+    <footer>
+        <Footer />
+    </footer>
 <style>
 
     progress {
