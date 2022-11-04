@@ -462,13 +462,36 @@
     })
 
 </script>
-    <header class='nav-container'>
-        <div>
-            <Nav />
-        </div>
-    </header>
-<div style='display:flex; justify-content:center'>
 
+<svelte:head>
+    <!-- HTML Meta Tags -->
+    <title>rsvp-synsets</title>
+    <meta name="description" content="A way to quickly read open parts of speech organized by synset groupings.">
+
+    <!-- Facebook Meta Tags -->
+    <meta property="og:url" content="https://rsvp-synsets.vercel.app/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="rsvp-synsets">
+    <meta property="og:description" content="A way to quickly read open parts of speech organized by synset groupings.">
+    <meta property="og:image" content="https://rsvp-synsets.vercel.app/rsvp-synsets-logo_v01.png">
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="twitter:domain" content="rsvp-synsets.vercel.app">
+    <meta property="twitter:url" content="https://rsvp-synsets.vercel.app/">
+    <meta name="twitter:title" content="rsvp-synsets">
+    <meta name="twitter:description" content="A way to quickly read open parts of speech organized by synset groupings.">
+    <meta name="twitter:image" content="https://rsvp-synsets.vercel.app/rsvp-synsets-logo_v01.png">
+
+    <!-- Meta Tags Generated via https://opengraph.dev -->
+</svelte:head>
+
+<header class='nav-container'>
+    <div>
+        <Nav />
+    </div>
+</header>
+<div style='display:flex; justify-content:center'>
     <main style='width:600px; height:auto; border:18px solid black; padding:18px; overflow:hidden'>
         <noscript><div style='text-align:center; padding:0px 0px 20px 0px'>This page requires JavaScript.</div></noscript>    
         {#if synsetDefines == undefined}                
