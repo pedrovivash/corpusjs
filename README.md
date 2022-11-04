@@ -1,4 +1,4 @@
-# rsvp-synsets ![logo](favicon.png)
+# rsvp-synsets ![logo](https://rsvp-synsets.vercel.app/favicon.png)
 
 
 
