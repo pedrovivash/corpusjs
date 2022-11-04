@@ -1,4 +1,6 @@
-# rsvp-synsets
+# rsvp-synsets ![logo](favicon.png)
+
+
 
 A way to quickly read open parts of speech organized by synset groupings.
 
@@ -14,4 +16,4 @@ Rapid Serial Visual Presentation is a technique for timing the display of images
 
 Synsets are a set of one or more synonyms. A wordnet combines synsets and orders them logically. If two words share some relation, it ought to be faster to learn about them as a group. So to speed-up the process of going from synset to synset, I apply RSVP to move through a comprehensive graph of synsets made by [globalwordnet](https://github.com/globalwordnet).
 
-The demo.
+[The demo](https://rsvp-synsets.vercel.app/).
