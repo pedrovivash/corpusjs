@@ -507,83 +507,84 @@
                     Loading Synsets
                 </p>
             </div>
-        {/if}
-        {#await gatherUserInput(position, synsetDefines)}
-            <div style='cursor:pointer;display:flex;flex-direction: row;justify-content: flex-start;align-items:center'>
-                <div class='settings-padding' style='' />
-                <label for='SETTINGS:'>SETTINGS:</label>
-                <button class='settings' name='SETTINGS' on:click={()=>settingsDisplay()}>
-                    <Gear style='color:#80d000;width:12px;height:12px'/>
-                </button>         
-            </div>
-            <div class='controls' style='display:{displaySettings}'>
-                <div class='controls-padding' style='' />
-                <div class='inputs' style=''>
-                    <div style='display:flex;'>
-                        <input type='number' name='WPM' min='60' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 60 ? validateWPM = 60 : validateWPM == null ? validateWPM = 60 : null}} bind:value={validateWPM}>
-                        <input type='button' class='desired-button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
-                    </div>
-                    <div style='display:flex;'>
-                        <input type='number' name='INDEX' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
-                        <input type='button' class='desired-button' on:click={()=> fillDesiredPosition(validatePosition) } value='INDEX'>
-                    </div>            
-                    <div style='display:flex; flex-direction:row;'>
-                        <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
-                        <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
-                    </div>    
-                    <button class='dropbtn' on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>TOPICS<div class='arrow' /></button>
-                    <div class='dropdown-container' on:pointerenter={()=> isChapters = true} on:mouseleave={()=> chaptershMouseOff()} style='display:{displayChapter}'>
-                        {#each lexPartArray as lexPart}
-                            <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
-                        {/each}
-                    </div>
-                    <div style='display:flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
-                        <label for='REVERSE'>REVERSE:</label> 
-                        <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
-                        <label for='STOP'>STOP:</label> 
-                        <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))} bind:this={stopCheck}>
-                    </div>
-                    <div style='display=flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
-                        <MagnifyingGlass style='top:3px; position:relative; color:#bbbbbb' />
-                        <input type='search' class='search-input' autocomplete='off' placeholder='>>' on:focus={()=> searchDisplayOn()} on:blur={()=> searchDisplayOff()} bind:this={searchCheck} bind:value={searchTerm} name='SEARCH'>
-                    </div>
-                    <div class='search-results-container' on:pointerenter={()=> isResults=true} on:mouseleave={()=> searchMouseOff()} style='display:{displaySearch}'>
-                        {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
-                            {#if result.length > 0} 
-                                {#each result as searchDisp}
-                                    <label for='memberIndex'>{searchDisp[0]}</label>
-                                    <div name='memberIndex' class='member-index'>
-                                        {#each searchDisp[1] as searchIndex}
-                                            <button class='search-contents' on:click={()=> searchSwitch(searchIndex)}>@{formatIndecesRange(searchIndex)}</button>
-                                        {/each}
-                                    </div>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
+        {:else}
+            {#await gatherUserInput(position, synsetDefines)}
+                <div style='cursor:pointer;display:flex;flex-direction: row;justify-content: flex-start;align-items:center'>
+                    <div class='settings-padding' style='' />
+                    <label for='SETTINGS:'>SETTINGS:</label>
+                    <button class='settings' name='SETTINGS' on:click={()=>settingsDisplay()}>
+                        <Gear style='color:#80d000;width:12px;height:12px'/>
+                    </button>         
                 </div>
-                <div class='controls-padding' style='' />
-            </div>
-            <div class='this-prog-containter'>
-                <progress class='this-prog' style='' value={position + 1} max={synsetsLength} />
-            </div>
-            <p>
-                <small>{pos}</small>
-            </p>
-            <div class='member-container' >
-                <h1 class='member' style=''>
-                    {member}
-                </h1>
-            </div>
-                <p style='text-align:right'>
-                    <small>{position}</small>
-                </p>
-            <div style='min-height:236px'>
+                <div class='controls' style='display:{displaySettings}'>
+                    <div class='controls-padding' style='' />
+                    <div class='inputs' style=''>
+                        <div style='display:flex;'>
+                            <input type='number' name='WPM' min='60' max='3600' on:drop={() => false} on:paste={() => false} on:change={()=> {validateWPM > 3600 ? validateWPM = 3600 : validateWPM < 60 ? validateWPM = 60 : validateWPM == null ? validateWPM = 60 : null}} bind:value={validateWPM}>
+                            <input type='button' class='desired-button' on:click={()=> desiredWPM = validateWPM} value='WPM'>
+                        </div>
+                        <div style='display:flex;'>
+                            <input type='number' name='INDEX' min='0' max={synsetsLength - 1} on:drop={()=> false} on:paste={() => false}  on:change={()=> {validatePosition > synsetsLength - 1 ? validatePosition = synsetsLength - 1 : validatePosition < 0 ? validatePosition = 0 : validatePosition == null ? validatePosition = 0 : null}} bind:value={validatePosition}>
+                            <input type='button' class='desired-button' on:click={()=> fillDesiredPosition(validatePosition) } value='INDEX'>
+                        </div>            
+                        <div style='display:flex; flex-direction:row;'>
+                            <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
+                            <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
+                        </div>    
+                        <button class='dropbtn' on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>TOPICS<div class='arrow' /></button>
+                        <div class='dropdown-container' on:pointerenter={()=> isChapters = true} on:mouseleave={()=> chaptershMouseOff()} style='display:{displayChapter}'>
+                            {#each lexPartArray as lexPart}
+                                <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
+                            {/each}
+                        </div>
+                        <div style='display:flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
+                            <label for='REVERSE'>REVERSE:</label> 
+                            <input type='checkbox' name='REVERSE' on:click={(()=>(activateReverse = !activateReverse))}>
+                            <label for='STOP'>STOP:</label> 
+                            <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))} bind:this={stopCheck}>
+                        </div>
+                        <div style='display=flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
+                            <MagnifyingGlass style='top:3px; position:relative; color:#bbbbbb' />
+                            <input type='search' class='search-input' autocomplete='off' placeholder='>>' on:focus={()=> searchDisplayOn()} on:blur={()=> searchDisplayOff()} bind:this={searchCheck} bind:value={searchTerm} name='SEARCH'>
+                        </div>
+                        <div class='search-results-container' on:pointerenter={()=> isResults=true} on:mouseleave={()=> searchMouseOff()} style='display:{displaySearch}'>
+                            {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
+                                {#if result.length > 0} 
+                                    {#each result as searchDisp}
+                                        <label for='memberIndex'>{searchDisp[0]}</label>
+                                        <div name='memberIndex' class='member-index'>
+                                            {#each searchDisp[1] as searchIndex}
+                                                <button class='search-contents' on:click={()=> searchSwitch(searchIndex)}>@{formatIndecesRange(searchIndex)}</button>
+                                            {/each}
+                                        </div>
+                                    {/each}
+                                {/if}
+                            {/await}
+                        </div>
+                    </div>
+                    <div class='controls-padding' style='' />
+                </div>
+                <div class='this-prog-containter'>
+                    <progress class='this-prog' style='' value={position + 1} max={synsetsLength} />
+                </div>
                 <p>
-                    {definition}
+                    <small>{pos}</small>
                 </p>
-            </div>
-        {/await}
+                <div class='member-container' >
+                    <h1 class='member' style=''>
+                        {member}
+                    </h1>
+                </div>
+                    <p style='text-align:right'>
+                        <small>{position}</small>
+                    </p>
+                <div style='min-height:236px'>
+                    <p>
+                        {definition}
+                    </p>
+                </div>
+            {/await}
+        {/if}
     </main>
 </div>
     <footer>
