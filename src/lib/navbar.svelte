@@ -4,7 +4,7 @@
 </script>
 
 <nav class = "nav-container">
-    <img class='rsvp' src='/rsvp-synsets-logo_v01.svg'>
+    <img class='rsvp' src='/rsvp-synsets-logo_v01.svg' alt='rsvp-synsets logo'>
     <div class = 'logo'>
         <a href="https://yoctobio.me" target="_blank" rel="noopener noreferrer"><Logo alt='YOCTOBIOME LLC, OFFICIAL LOGO 2022 CE'/></a>
     </div>
