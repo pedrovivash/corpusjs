@@ -341,6 +341,7 @@
     
     // ...search CSS
     function searchDisplayOn(){
+        isResults = true
         displaySearch = 'initial'
     }
     function searchDisplayOff(){
@@ -742,7 +743,6 @@
         padding: 6px;
         border-radius: none;
         align-items: center;
-        transform: translateZ(0)
 
     }
     input[type='checkbox']:checked {
