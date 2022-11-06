@@ -117,7 +117,6 @@
     let delay
 
     // ...for HTML elements
-    let svBody
     let stopCheck
     let searchCheck
     let searchBoxCheck
@@ -125,9 +124,9 @@
     let chaptersBoxCheck
 
     // ...handle mobile dropdown "blurs"
-
+ let clicky
     function windowClick(a) {
-        console.log('this')
+        clicky = a.target
         let target = (a && a.target) || (event && event.srcElement)
         let display = 'none'
         let searchTrigger = false
@@ -160,7 +159,7 @@
         }
     }
 
-    let clicky = false
+    
     function testClick () {
         clicky = true
     }
@@ -462,7 +461,7 @@
     })
 
 </script>
-<svelte:body bind:this={svBody} on:click={windowClick} />
+<svelte:body on:click={windowClick}/>
 <svelte:head>
     <!-- HTML Meta Tags -->
     <title>rsvp-synsets</title>
@@ -485,6 +484,7 @@
 
     <!-- Meta Tags Generated via https://opengraph.dev -->
 </svelte:head>
+<pre>{clicky}</pre>
 <header class='nav-container'>
     <div>
         <Nav />
