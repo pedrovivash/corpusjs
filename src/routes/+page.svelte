@@ -556,7 +556,7 @@
                             <input type='button' class='step-button' name='STEPDOWN' on:click={()=> stepPosition('down')} value='STEP -1'>
                             <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
                         </div>    
-                        <button class='dropbtn' on:click={()=> chaptersDisplayOn()} on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>TOPICS<div class='arrow' /></button>
+                        <button class='dropbtn' on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>TOPICS<div class='arrow' /></button>
                         <div class='dropdown-container' on:pointerenter={()=> isChapters = true} on:mouseleave={()=> chaptershMouseOff()} style='display:{displayChapter}' bind:this={chaptersBoxCheck}>
                             {#each lexPartArray as lexPart}
                                 <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
