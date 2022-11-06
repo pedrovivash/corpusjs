@@ -164,22 +164,21 @@
     function windowClick(a) {
         let target = (a && a.target) || (event && event.srcElement)
         clicky = target
-        let display = 'none'
 
         if (target != searchBoxCheck &&  target != searchCheck) {    
-            searchBoxCheck.style.display = display
+            searchBoxCheck.style.display = 'none'
         }
         else
         {
-            display = 'initial'
+            searchBoxCheck.style.display = 'initial'
             console.log('that', searchCheck)
         }
         if (target != chaptersBoxCheck && target != chaptersCheck) {
-            chaptersBoxCheck.style.display = display  
+            chaptersBoxCheck.style.display = 'none' 
         }
         else 
         {              
-            display = 'flex'
+            chapteresBoxCheck.style.display = 'flex'
             console.log('then', chaptersCheck)
         }
     }
