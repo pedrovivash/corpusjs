@@ -117,32 +117,48 @@
     let delay
 
     // ...for HTML elements
+    let svWindow
     let stopCheck
     let searchCheck
     let searchBoxCheck
     let chaptersCheck
-    let chapersBoxCheck
+    let chaptersBoxCheck
 
     // ...handle mobile dropdown "blurs"
 
-    document.onclick = function(a) {
+    function windowClick(a) {
         console.log('this')
         let target = (a && a.target) || (event && event.srcElement)
         let display = 'none'
+        let searchTrigger = false
+        let chaptersTrigger = false
+
         while (target.parentNode) {
 
-        if (target == searchBoxCheck || target == chaptersBoxCheck) {
-            display ='block'
+        if (target == searchBoxCheck ||  target == searchCheck) {
+            display = 'initial'
+            console.log('that')
+            searchTrigger = true
+            break
+        }
+        else if (target == chaptersBoxCheck || target == chaptersCheck) {
+            display = 'flex'
+            console.log('then')
+            chaptersTrigger = true
             break
         }
         target = target.parentNode;
         }
 
-        searchBoxCheck.style.display = display
-        chaptersBoxCheck.style.display = display
-
+        if (searchTrigger) {
+            searchBoxCheck.style.display = display
+            searchTrigger = false
+        }
+        if (chapterTrigger) {
+            chaptersBoxCheck.style.display = display
+            chapterTrigger = false
+        }
     }
-
 
     // animation
 
@@ -441,7 +457,7 @@
     })
 
 </script>
-
+<svelte:window on:click={windowClick} />
 <svelte:head>
     <!-- HTML Meta Tags -->
     <title>rsvp-synsets</title>
@@ -511,7 +527,7 @@
                             <input type='button' class='step-button' name='STEPUP' on:click={()=> stepPosition('up')} value='STEP +1'>
                         </div>    
                         <button class='dropbtn' on:click={()=> chaptersDisplayOn()} on:focus={()=> chaptersDisplayOn()} on:blur={()=> chaptersDisplayOff()} bind:this={chaptersCheck} name='partofSpeech'>TOPICS<div class='arrow' /></button>
-                        <div class='dropdown-container' on:pointerenter={()=> isChapters = true} on:mouseleave={()=> chaptershMouseOff()} style='display:{displayChapter}'>
+                        <div class='dropdown-container' on:pointerenter={()=> isChapters = true} on:mouseleave={()=> chaptershMouseOff()} style='display:{displayChapter}' bind:this={chaptersBoxCheck}>
                             {#each lexPartArray as lexPart}
                                 <button class='dropdown-content' style='' on:click={()=> chapterSwitch(lexPart[0])}>{lexPart[1]}</button>
                             {/each}
@@ -522,11 +538,11 @@
                             <label for='STOP'>STOP:</label> 
                             <input type='checkbox' name='STOP' on:click={(()=>(activateStop = !activateStop))} bind:this={stopCheck}>
                         </div>
-                        <div style='display=flex; flex-direction:row; justify-content:space-between; width: 148px; align-items:center'>
+                        <div style='justify-content:space-between; width: 148px; align-items:center'>
                             <MagnifyingGlass style='top:3px; position:relative; color:#bbbbbb' />
                             <input type='search' class='search-input' autocomplete='off' placeholder='>>' on:focus={()=> searchDisplayOn()} on:blur={()=> searchDisplayOff()} bind:this={searchCheck} bind:value={searchTerm} name='SEARCH'>
                         </div>
-                        <div class='search-results-container' on:pointerenter={()=> isResults=true} on:mouseleave={()=> searchMouseOff()} style='display:{displaySearch}'>
+                        <div class='search-results-container' on:pointerenter={()=> isResults=true} on:mouseleave={()=> searchMouseOff()} style='display:{displaySearch}' bind:this={searchBoxCheck}>
                             {#await searchTermReturn(searchTerm, lexicalSearchTerms, synsetDefines) then result}
                                 {#if result.length > 0} 
                                     {#each result as searchDisp}
