@@ -1,70 +1,12 @@
 <script>
-    import fxp from "fast-xml-parser"
     import { onMount } from 'svelte'
     import {MagnifyingGlass, Gear} from 'radix-icons-svelte'
     import '../styles/global.css'
     import Nav from '$lib/navbar.svelte'
     import Footer from '$lib/footer.svelte'
 
-    // loading fast-xml-parser
-
-    // ...options for the fxp
-    // -missing attrbibuteNamePrefix: "@_"
-    const options = {
-        ignoreAttributes: false,
-        ignorePiTags: true
-    }
-    const parser = new fxp.XMLParser(options)
 
     // synset handling
-
-    // ...a list of the topics as were defined by globalwordnet that organizes the synsets
-    const lexPartList = [
-        'adj.all',
-        'adj.pert',
-        'adj.ppl',
-        'adv.all',
-        'noun.act',
-        'noun.animal',
-        'noun.artifact',
-        'noun.attribute',
-        'noun.body',
-        'noun.cognition',
-        'noun.communication',
-        'noun.event',
-        'noun.feeling',
-        'noun.food',
-        'noun.group',
-        'noun.location',
-        'noun.motive',
-        'noun.object',
-        'noun.person',
-        'noun.phenomenon',
-        'noun.plant',
-        'noun.possession',
-        'noun.process',
-        'noun.quantity',
-        'noun.relation',
-        'noun.shape',
-        'noun.state',
-        'noun.substance',
-        'noun.time',
-        'noun.Tops',
-        'verb.body',
-        'verb.change',
-        'verb.cognition',
-        'verb.communication',
-        'verb.competition',
-        'verb.consumption',
-        'verb.contact',
-        'verb.creation',
-        'verb.emotion',
-        'verb.motion',
-        'verb.perception',
-        'verb.possession',
-        'verb.social',
-        'verb.stative',
-        'verb.weather']
 
     // ...catches the lexical entries
     let lexPartArray = []    
@@ -124,46 +66,8 @@
     let chaptersBoxCheck
 
     // ...handle mobile dropdown "blurs"
- let clicky
-    /*
     function windowClick(a) {
         let target = (a && a.target) || (event && event.srcElement)
-        clicky = target
-        let display = 'none'
-        let searchTrigger = false
-        let chaptersTrigger = false
-
-        while (target.parentNode) {
-
-        if (target == searchBoxCheck ||  target == searchCheck) {
-            display = 'initial'
-            console.log('that', searchCheck)
-            searchTrigger = true
-            break
-        }
-        else if (target == chaptersBoxCheck || target == chaptersCheck) {
-            display = 'flex'
-            console.log('then', chaptersCheck)
-            chaptersTrigger = true
-            break
-        }
-        target = target.parentNode;
-        }
-
-        if (searchTrigger) {
-            searchBoxCheck.style.display = display
-            searchTrigger = false
-        }
-        if (chapterTrigger) {
-            chaptersBoxCheck.style.display = display
-            chapterTrigger = false
-        }
-    }
-    */
-
-    function windowClick(a) {
-        let target = (a && a.target) || (event && event.srcElement)
-        clicky = target
 
         if (target != searchBoxCheck &&  target != searchCheck) {    
             searchBoxCheck.style.display = 'none'
@@ -171,7 +75,6 @@
         else
         {
             searchBoxCheck.style.display = 'initial'
-            console.log('that', searchCheck)
         }
         if (target != chaptersBoxCheck && target != chaptersCheck) {
             chaptersBoxCheck.style.display = 'none' 
@@ -179,15 +82,7 @@
         else 
         {              
             chaptersBoxCheck.style.display = 'flex'
-            console.log('then', chaptersCheck)
         }
-    }
-
-
-  
-    
-    function testClick () {
-        clicky = true
     }
 
     // animation
@@ -464,7 +359,7 @@
 
     // ...gets the data
     onMount(async () => {
-        
+        // used fast-xml-parser to extract data from LMF XML beforehand
         const synsResponse = await fetch('/01_synsetDefines.json')
         const lexSearchResponse = await fetch('/02_lexicalSearchTerms.json')
         const lexPartResponse = await fetch('/03_lexPartArray.json')
@@ -510,7 +405,7 @@
 
     <!-- Meta Tags Generated via https://opengraph.dev -->
 </svelte:head>
-<pre>{clicky}</pre>
+
 <header class='nav-container'>
     <div>
         <Nav />
@@ -847,6 +742,7 @@
         padding: 6px;
         border-radius: none;
         align-items: center;
+        transform: translateZ(0)
 
     }
     input[type='checkbox']:checked {
