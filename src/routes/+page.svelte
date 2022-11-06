@@ -119,7 +119,30 @@
     // ...for HTML elements
     let stopCheck
     let searchCheck
+    let searchBoxCheck
     let chaptersCheck
+    let chapersBoxCheck
+
+    // ...handle mobile dropdown "blurs"
+
+    document.onclick = function(a) {
+        console.log('this')
+        let target = (a && a.target) || (event && event.srcElement)
+        let display = 'none'
+        while (target.parentNode) {
+
+        if (target == searchBoxCheck || target == chaptersBoxCheck) {
+            display ='block'
+            break
+        }
+        target = target.parentNode;
+        }
+
+        searchBoxCheck.style.display = display
+        chaptersBoxCheck.style.display = display
+
+    }
+
 
     // animation
 
@@ -452,7 +475,7 @@
         <noscript><div style='text-align:center; padding:0px 0px 20px 0px'>This page requires JavaScript.</div></noscript>    
         {#if synsetDefines == undefined}                
             <div class='loading-anim' style='display:flex; width:100%; height:64px; justify-content:center;'>
-                <div class=loading-img-container style='display:flex;justify-content:center;position:absolute;width:96px;height:64px;'>
+                <div class='loading-img-container' style='display:flex;justify-content:center;position:absolute;width:96px;height:64px;'>
                     {#each loaderRange as frameIndex}
                         <img class='loading-img' id='loading-frame-{frameIndex[0]}' style='' src='rsvp-synsets-loader/rsvp-synsets-loader_{frameIndex[1]}.svg' alt='animation of letters per frame at 60hz'>
                     {/each}
