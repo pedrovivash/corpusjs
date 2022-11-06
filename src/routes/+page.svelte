@@ -462,7 +462,7 @@
     })
 
 </script>
-<svelte:body bind:this={svBody} on:click={testClick} />
+<svelte:body bind:this={svBody} on:click={windowClick} />
 <svelte:head>
     <!-- HTML Meta Tags -->
     <title>rsvp-synsets</title>
@@ -485,7 +485,6 @@
 
     <!-- Meta Tags Generated via https://opengraph.dev -->
 </svelte:head>
-<pre>{clicky}</pre>
 <header class='nav-container'>
     <div>
         <Nav />
