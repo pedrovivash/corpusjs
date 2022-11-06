@@ -457,7 +457,7 @@
     })
 
 </script>
-<svelte:window on:click={windowClick} />
+<svelte:window on:pointerdown={windowClick} />
 <svelte:head>
     <!-- HTML Meta Tags -->
     <title>rsvp-synsets</title>
