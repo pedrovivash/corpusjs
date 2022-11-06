@@ -178,7 +178,7 @@
         }
         else 
         {              
-            chapteresBoxCheck.style.display = 'flex'
+            chaptersBoxCheck.style.display = 'flex'
             console.log('then', chaptersCheck)
         }
     }
