@@ -594,6 +594,7 @@
         outline-offset: none;
         border-style: none;
         cursor: pointer;
+        z-index: 1;
     }
     .search-contents:hover {
         color:white;
@@ -700,7 +701,7 @@
         box-shadow: 0px 2px 8px rgba(0, 0, 0, .2);
         position:absolute;
         overflow-y: scroll;
-        z-index: 1;
+        z-index: 2;
     }
    
     .dropdown-content {
@@ -739,7 +740,8 @@
         -o-appearance: none !important;
         appearance: none !important;
         background-color: white;
-        border: 1px solid #80d000;
+        border: none;
+        outline: 1px solid #80d000;
         padding: 6px;
         border-radius: none;
         align-items: center;
