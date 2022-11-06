@@ -166,28 +166,21 @@
         clicky = target
         let display = 'none'
 
-        if (target != searchBoxCheck ||  target != searchCheck) {    
-
-                searchBoxCheck.style.display = display
-
-            
+        if (target != searchBoxCheck &&  target != searchCheck) {    
+            searchBoxCheck.style.display = display
         }
         else
         {
             display = 'initial'
             console.log('that', searchCheck)
-
         }
-        if (target != chaptersBoxCheck || target != chaptersCheck) {
+        if (target != chaptersBoxCheck && target != chaptersCheck) {
+            chaptersBoxCheck.style.display = display  
+        }
+        else 
+        {              
             display = 'flex'
             console.log('then', chaptersCheck)
-
-        }
-        else {
-
-                chaptersBoxCheck.style.display = display
-
-            
         }
     }
 
