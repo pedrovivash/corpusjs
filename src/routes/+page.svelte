@@ -396,6 +396,19 @@
     // ...gets the data
     onMount(async () => {
         
+        const synsResponse = await fetch('/01_synsetDefines.json')
+        const lexSearchResponse = await fetch('/02_lexicalSearchTerms.json')
+        const lexPartResponse = await fetch('/03_lexPartArray.json')
+        const synsText = await synsResponse.text()
+        const lexSearchText = await lexSearchResponse.text()
+        const lexPartText = await lexPartResponse.text()
+        synsetDefines = JSON.parse(synsText)
+        lexicalSearchTerms = JSON.parse(lexSearchText)
+        lexPartArray = JSON.parse(lexPartText)
+
+        
+
+        /*
         // ...fetching xml and converting > text > JSobj
         const response = await fetch('/wn.xml')
         const text = await response.text()
@@ -412,7 +425,7 @@
 
         // ...extract nested lexical entries
         function getLexicals (aoo){
-            return lexicals.map(x => {
+            return aoo.map(x => {
                 const lemma = x['Lemma']['@_writtenForm']
                 const lexPOS = x['Lemma']['@_partOfSpeech']
                 let synsetIDs = []
@@ -443,20 +456,32 @@
             null
             return giveReturn
         }
-        
+        */
         // ...function calls
-        synsetDefines = getSynsets(synsets)
-        synsetDefines.forEach(x => sumMembersLengths += x[0].length)
-        avgMemberLength = sumMembersLengths/synsetDefines.length
-        synsetDefines.unshift(['a word', 'intro.this', 'a feature of language with often comparable meaning(s) to others like it'])
+        //synsetDefines = getSynsets(synsets)
+        synsetDefines.forEach( (x,i) => {
+            if (i == 0) {
+                null
+            }
+            else {
+            sumMembersLengths += x[0].length
+            }
+        })
+        avgMemberLength = sumMembersLengths/(synsetDefines.length - 1)
+        //synsetDefines.unshift(['a word', 'intro.this', 'a feature of language with often comparable meaning(s) to others like it'])
         synsetsLength = synsetDefines.length
+        /*
         lexPartArray = lexPartList.map(lexGroup=> {
             function testLexPart(synsetArray) {
                 return synsetArray[1] == lexGroup
             }
             return [synsetDefines.find(testLexPart)[4], lexGroup]
-        })    
-        lexicalSearchTerms = getLexicals(lexicals)
+        })
+        */    
+        //lexicalSearchTerms = getLexicals(lexicals)
+        //console.log(lexPartArray)
+        //console.log(lexicalSearchTerms)
+        //console.log(synsetDefines)
 
                 
     })
