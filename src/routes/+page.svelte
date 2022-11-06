@@ -125,9 +125,10 @@
 
     // ...handle mobile dropdown "blurs"
  let clicky
+    /*
     function windowClick(a) {
-        clicky = a.target
         let target = (a && a.target) || (event && event.srcElement)
+        clicky = target
         let display = 'none'
         let searchTrigger = false
         let chaptersTrigger = false
@@ -136,13 +137,13 @@
 
         if (target == searchBoxCheck ||  target == searchCheck) {
             display = 'initial'
-            console.log('that')
+            console.log('that', searchCheck)
             searchTrigger = true
             break
         }
         else if (target == chaptersBoxCheck || target == chaptersCheck) {
             display = 'flex'
-            console.log('then')
+            console.log('then', chaptersCheck)
             chaptersTrigger = true
             break
         }
@@ -158,7 +159,40 @@
             chapterTrigger = false
         }
     }
+    */
 
+    function windowClick(a) {
+        let target = (a && a.target) || (event && event.srcElement)
+        clicky = target
+        let display = 'none'
+
+        if (target != searchBoxCheck ||  target != searchCheck) {    
+
+                searchBoxCheck.style.display = display
+
+            
+        }
+        else
+        {
+            display = 'initial'
+            console.log('that', searchCheck)
+
+        }
+        if (target != chaptersBoxCheck || target != chaptersCheck) {
+            display = 'flex'
+            console.log('then', chaptersCheck)
+
+        }
+        else {
+
+                chaptersBoxCheck.style.display = display
+
+            
+        }
+    }
+
+
+  
     
     function testClick () {
         clicky = true
